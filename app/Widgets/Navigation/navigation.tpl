@@ -24,12 +24,12 @@
         </li>
     {/if}
 
-    <li onclick="MovimUtils.reload('{$c->route('chat')}')"
+    <li onclick="{if="$page == 'chat'"}Rooms.toggleScroll(){else}MovimUtils.reload('{$c->route('chat')}'){/if}"
         class="on_desktop {if="$page == 'chat'"}active{/if}"
         title="{$c->__('page.chats')}"
     >
         <span class="primary icon" id="chatcounter" {if="$chatCounter > 0"}data-counter="{$chatCounter}"{/if}>
-            <i class="material-symbols">forum</i>
+            <i class="material-symbols">chat_bubble</i>
         </span>
         <div>
             <p class="normal">{$c->__('page.chats')}</p>

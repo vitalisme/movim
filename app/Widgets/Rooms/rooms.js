@@ -6,34 +6,71 @@ var Rooms = {
     },
 
     toggleEdit: function () {
-        document.querySelector('#rooms_widget ul.list.rooms').classList.toggle('edition');
+        document.querySelector('#rooms ul.list.rooms').classList.toggle('edition');
+    },
+
+    toggleScroll: function () {
+        var chats = document.querySelector('#chats_widget_header');
+        var rooms = document.querySelector('#rooms');
+
+        if (rooms.dataset.scroll) {
+            chats.scrollIntoView();
+        } else {
+            rooms.scrollIntoView();
+        }
+    },
+
+    scrollToChats: function () {
+        var chats = document.querySelector('#chats_widget_header');
+        var rooms = document.querySelector('#rooms');
+
+        var chatcounter = document.querySelector('#chatcounter i');
+        var bottomchatcounter = document.querySelector('#bottomchatcounter i');
+
+        chats.dataset.scroll = true;
+        delete rooms.dataset.scroll;
+
+        chatcounter.innerHTML = bottomchatcounter.innerHTML = 'chat_bubble';
+    },
+
+    scrollToRooms: function () {
+        var chats = document.querySelector('#chats_widget_header');
+        var rooms = document.querySelector('#rooms');
+
+        var chatcounter = document.querySelector('#chatcounter i');
+        var bottomchatcounter = document.querySelector('#bottomchatcounter i');
+
+        delete chats.dataset.scroll;
+        rooms.dataset.scroll = true;
+
+        chatcounter.innerHTML = bottomchatcounter.innerHTML = 'forum';
     },
 
     checkNoConnected: function () {
         if (
-            !document.querySelector('#rooms_widget ul.list.rooms li.connected')
+            !document.querySelector('#rooms ul.list.rooms li.connected')
             && localStorage.getItem('rooms_all') == 'true'
         ) {
-            document.querySelector('#rooms_widget ul.list.rooms').classList.add('all');
+            document.querySelector('#rooms ul.list.rooms').classList.add('all');
         }
     },
 
     toggleShowAll: function () {
-        document.querySelector('#rooms_widget ul.list.rooms').classList.toggle('all');
-        localStorage.setItem('rooms_all', document.querySelector('#rooms_widget ul.list.rooms').classList.contains('all'));
+        document.querySelector('#rooms ul.list.rooms').classList.toggle('all');
+        localStorage.setItem('rooms_all', document.querySelector('#rooms ul.list.rooms').classList.contains('all'));
 
         Rooms.displayToggleButton();
     },
 
     displayToggleButton: function () {
-        document.querySelectorAll('#rooms_widget span.chip').forEach(chip => {
+        document.querySelectorAll('#rooms span.chip').forEach(chip => {
             chip.classList.remove('enabled');
         });
 
         if (localStorage.getItem('rooms_all') == 'true') {
-            document.querySelector('#rooms_widget span.chip[data-filter=all]').classList.add('enabled');
+            document.querySelector('#rooms span.chip[data-filter=all]').classList.add('enabled');
         } else {
-            document.querySelector('#rooms_widget span.chip[data-filter=connected]').classList.add('enabled');
+            document.querySelector('#rooms span.chip[data-filter=connected]').classList.add('enabled');
         }
     },
 
@@ -70,8 +107,18 @@ var Rooms = {
     refresh: function (callSecond) {
         Rooms.displayToggleButton();
 
-        var list = document.querySelector('#rooms_widget ul.list.rooms');
-        var items = document.querySelectorAll('#rooms_widget ul.list.rooms li:not(.subheader)');
+        var parent = document.querySelector('#rooms').parentElement;
+
+        parent.onscroll = e => {
+            if (e.target.scrollTop + 5 >= document.querySelector('#rooms').offsetTop) {
+                Rooms.scrollToRooms();
+            } else {
+                Rooms.scrollToChats();
+            }
+        };
+
+        var list = document.querySelector('#rooms ul.list.rooms');
+        var items = document.querySelectorAll('#rooms ul.list.rooms li:not(.subheader)');
         var i = 0;
 
         var differentStates = false;
@@ -110,11 +157,11 @@ var Rooms = {
     },
 
     clearRooms: function () {
-        document.querySelector('#rooms_widget ul.list.rooms').innerHTML = '';
+        document.querySelector('#rooms ul.list.rooms').innerHTML = '';
     },
 
     setRoom: function (id, html, noSecondRefresh) {
-        var listSelector = '#rooms_widget ul.list.rooms ';
+        var listSelector = '#rooms ul.list.rooms ';
         var list = document.querySelector(listSelector);
         var element = list.querySelector('#' + id);
 
@@ -139,19 +186,19 @@ var Rooms = {
         Rooms.refresh(noSecondRefresh);
     },
 
-    clearAllActives: function() {
-        document.querySelectorAll('#rooms_widget ul.list.rooms li:not(.subheader)')
+    clearAllActives: function () {
+        document.querySelectorAll('#rooms ul.list.rooms li:not(.subheader)')
             .forEach(item => item.classList.remove('active'));
     },
 
     setActive: function (jid) {
         Chats.clearAllActives();
         Rooms.clearAllActives();
-        MovimUtils.addClass('#rooms_widget ul.list.rooms li[data-jid="' + jid + '"]', 'active');
+        MovimUtils.addClass('#rooms ul.list.rooms li[data-jid="' + jid + '"]', 'active');
     },
 
     setUnread: function (id, unread) {
-        var element = document.querySelector('#rooms_widget ul.list.rooms #' + id);
+        var element = document.querySelector('#rooms ul.list.rooms #' + id);
 
         if (element) {
             if (unread) {
