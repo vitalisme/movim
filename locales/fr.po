@@ -128,7 +128,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: movim\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-02 23:43+0200\n"
+"POT-Creation-Date: 2025-07-14 21:08+0200\n"
 "PO-Revision-Date: 2015-06-24 09:45+0000\n"
 "Last-Translator: Jaussoin Timothée <edhelas@movim.eu>, 2015-2025\n"
 "Language-Team: French (France) (http://app.transifex.com/movim/movim/language/fr_FR/)\n"
@@ -658,7 +658,7 @@ msgstr "Appel manqué"
 msgid "Refused call"
 msgstr "Appel refusé"
 
-#: [chat]jingle_end [visio]ended
+#: [chat]jingle_end
 msgid "Call ended"
 msgstr "Fin de l'appel"
 
@@ -1869,7 +1869,7 @@ msgstr "Nouveau billet"
 msgid "This is a re-post from %s"
 msgstr "Ceci est une republication de %s"
 
-#: [post]repost_profile
+#: [post]see_profile
 msgid "See %s profile"
 msgstr "Voir le profil de %s"
 
@@ -1888,14 +1888,6 @@ msgstr "%s minute"
 #: [post]read_time_plural
 msgid "%s minutes"
 msgstr "%s minutes"
-
-#: [post]public_title
-msgid "Publish this post publicly"
-msgstr "Publier cet article publiquement"
-
-#: [post]public_text
-msgid "This will allow anyone outside Movim to have access to your publication"
-msgstr "Vous allez autoriser l'accès à cet article à n'importe qui à l'extérieur de Movim"
 
 #: [post]public_preview
 msgid "Preview URL: %s"
@@ -1976,6 +1968,10 @@ msgstr "Aime votre publication"
 #: [post]commented
 msgid "Commented"
 msgstr "Commenté"
+
+#: [post]subscription_required
+msgid "You must be subscribed to %s to see this publication"
+msgstr "Vous devez suivre %s pour voir cette publication"
 
 #: [hello]contact_post
 msgid "Contact post"
@@ -2108,6 +2104,19 @@ msgstr "Ajouter des #hastag dans le titre ou le contenu de votre article pour ê
 #: [publish]publish_error_forbidden
 msgid "You are not authorized to publish there"
 msgstr "Vous n'êtes pas autorisé à publier ici"
+
+#: [publish]blog_presence
+msgid "Your blog is only accessible to your subscribers. You can make it accessible to anyone in the settings page."
+msgstr "Votre blog n'est accessible qu'à vos contacts. Vous pouvez le rendre accessible à tous dans la configuration."
+
+#: [publish]web_title
+#, fuzzy
+msgid "Publish this post on your public blog"
+msgstr "Publier cet article publiquement"
+
+#: [publish]web_text
+msgid "This will allow anyone outside Movim to have access to your publication"
+msgstr "Vous allez autoriser l'accès à cet article à n'importe qui à l'extérieur de Movim"
 
 #: [publishhelp]title [page]help
 msgid "Help"
@@ -2642,16 +2651,8 @@ msgid "Story deleted"
 msgstr "Story supprimée"
 
 #: [subscribe]info
-msgid "Movim is a decentralized social network, before creating a new account you need to choose a server to register."
-msgstr "Movim est un réseau social décentralisé, avant de créer un compte vous devez choisir un serveur sur lequel vous inscrire."
-
-#: [subscribe]server_question
-msgid "Your server here?"
-msgstr "Votre serveur ici ?"
-
-#: [subscribe]server_contact
-msgid "Contact us to add yours to the officially supported servers list"
-msgstr "Contactez-nous pour ajouter le vôtre à la liste des serveurs officiellement pris en charge"
+msgid "Movim is a decentralized social network, you are invited to register on the following XMPP server(s)"
+msgstr "Movim est un réseau social décentralisé, vous êtes invité à vous inscrire sur le(s) serveur(s) suivant"
 
 #: [feed]title
 msgid "%s’s feed"
@@ -2817,6 +2818,10 @@ msgstr "Échoué"
 msgid "…connecting"
 msgstr "…mise en relation"
 
+#: [visio]ended
+msgid "End of call"
+msgstr "Fin de l'appel"
+
 #: [visio]no_participants_left
 msgid "All participants have left the call"
 msgstr "Tous les participants ont quités l'appel"
@@ -2930,8 +2935,8 @@ msgid "Profile Picture"
 msgstr "Avatar"
 
 #: [page]chats
-msgid "Direct Messages"
-msgstr "Messages directs"
+msgid "Messages"
+msgstr "Messages"
 
 #: [page]publish
 msgid "Publish"

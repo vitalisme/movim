@@ -8,14 +8,23 @@ use App\Widgets\Notif\Notif;
 use App\Widgets\Rooms\Rooms;
 use App\Widgets\Toast\Toast;
 
-use Moxl\Xec\Action\Jingle\MessagePropose;
-use Moxl\Xec\Action\Jingle\MessageRetract;
-use Moxl\Xec\Action\Jingle\MessageProceed;
-use Moxl\Xec\Action\Jingle\MessageReject;
+use Movim\CurrentCall;
+use Movim\ImageSize;
+use Movim\Librairies\JingletoSDP;
+use Movim\Librairies\SDPtoJingle;
+use Movim\Widget\Base;
+
+use Moxl\Xec\Action\Jingle\ContentAdd;
+use Moxl\Xec\Action\Jingle\ContentModify;
+use Moxl\Xec\Action\Jingle\ContentRemove;
 use Moxl\Xec\Action\Jingle\MessageFinish;
+use Moxl\Xec\Action\Jingle\MessageProceed;
+use Moxl\Xec\Action\Jingle\MessagePropose;
+use Moxl\Xec\Action\Jingle\MessageReject;
+use Moxl\Xec\Action\Jingle\MessageRetract;
 use Moxl\Xec\Action\Jingle\SessionInitiate;
-use Moxl\Xec\Action\Jingle\SessionTerminate;
 use Moxl\Xec\Action\Jingle\SessionMute;
+use Moxl\Xec\Action\Jingle\SessionTerminate;
 use Moxl\Xec\Action\Jingle\SessionUnmute;
 use Moxl\Xec\Action\JingleCallInvite\Accept;
 use Moxl\Xec\Action\JingleCallInvite\Invite;
@@ -24,12 +33,6 @@ use Moxl\Xec\Action\Muc\CreateMujiRoom;
 use Moxl\Xec\Action\Presence\Muc;
 use Moxl\Xec\Action\Presence\Unavailable;
 use Moxl\Xec\Payload\Packet;
-
-use Movim\Widget\Base;
-use Movim\CurrentCall;
-use Movim\ImageSize;
-use Movim\Librairies\JingletoSDP;
-use Movim\Librairies\SDPtoJingle;
 
 class Visio extends Base
 {
@@ -220,6 +223,8 @@ class Visio extends Base
         $this->rpc('Notif.incomingCallAnswer');
         (new Dialog)->ajaxClear();
 
+        Toast::send($this->__('visio.ended'));
+
         $this->rpc('MovimJingles.onTerminate', \baseJid($packet->from));
     }
 
@@ -238,7 +243,30 @@ class Visio extends Base
     {
         $jts = new JingletoSDP($packet->content);
 
-        $this->rpc('MovimJingles.onContentAdd', \baseJid($packet->from), $jts->generate());
+        $this->rpc('MovimJingles.onContentAdd',
+            \baseJid($packet->from), $jts->generate(),
+            (string)$packet->content->content->attributes()->name
+        );
+    }
+
+    public function onContentModify(Packet $packet)
+    {
+        $jts = new JingletoSDP($packet->content);
+
+        $this->rpc('MovimJingles.onContentModify',
+            \baseJid($packet->from), $jts->generate(),
+            //(string)$packet->content->attributes()->name
+        );
+    }
+
+    public function onContentRemove(Packet $packet)
+    {
+        $jts = new JingletoSDP($packet->content);
+
+        $this->rpc('MovimJingles.onContentRemove',
+            \baseJid($packet->from), $jts->generate(),
+            (string)$packet->content->attributes()->name
+        );
     }
 
     public function onAcceptSDP(Packet $packet)
@@ -327,6 +355,38 @@ class Visio extends Base
         $p->setTo($to)
             ->setId($id)
             ->setName($name)
+            ->request();
+    }
+
+    /** Content */
+
+    public function ajaxContentAdd(string $to, string $sdp, string $id, string $mediaId)
+    {
+        $stj = new SDPtoJingle($this->filterSDPMedia($sdp, $mediaId), sid: $id, action: 'content-add');
+
+        $si = new ContentAdd;
+        $si->setTo($to)
+            ->setJingle($stj->generate())
+            ->request();
+    }
+
+    public function ajaxContentRemove(string $to, string $sdp, string $id, string $mediaId)
+    {
+        $stj = new SDPtoJingle($this->filterSDPMedia($sdp, $mediaId), sid: $id, action: 'content-remove');
+
+        $si = new ContentRemove;
+        $si->setTo($to)
+            ->setJingle($stj->generate())
+            ->request();
+    }
+
+    public function ajaxContentModify(string $to, string $sdp, string $id)
+    {
+        $stj = new SDPtoJingle($sdp, sid: $id, action: 'content-modify');
+
+        $si = new ContentModify;
+        $si->setTo($to)
+            ->setJingle($stj->generate())
             ->request();
     }
 
@@ -423,7 +483,7 @@ class Visio extends Base
 
             Notif::append(
                 'call',
-                $contact->truename,
+                '📞 ' . $contact->truename,
                 $this->__('visio.calling'),
                 $contact->getPicture(),
                 5
@@ -472,7 +532,7 @@ class Visio extends Base
             ->first();
 
         if ($muji) {
-            $stj = new SDPtoJingle($sdp->sdp, $this->user->id, $mujiId, true);
+            $stj = new SDPtoJingle($sdp->sdp, sid: $mujiId, muji: true);
 
             $muc = new Muc;
             $muc->setTo($muji->muc)
@@ -529,12 +589,10 @@ class Visio extends Base
     public function ajaxSessionInitiate(string $jid, $sdp, string $id, ?string $mujiRoom = null)
     {
         $stj = new SDPtoJingle(
-            $sdp->sdp,
-            $this->user->id,
-            $id,
-            false,
-            $jid,
-            'session-initiate'
+            sdp: $sdp->sdp,
+            sid: $id,
+            responder: $jid,
+            action: 'session-initiate'
         );
 
         if ($mujiRoom) {
@@ -543,7 +601,7 @@ class Visio extends Base
 
         $si = new SessionInitiate;
         $si->setTo($jid)
-            ->setOffer($stj->generate())
+            ->setJingle($stj->generate())
             ->request();
     }
 
@@ -606,17 +664,15 @@ class Visio extends Base
     public function ajaxSessionAccept(string $to, string $id, $sdp)
     {
         $stj = new SDPtoJingle(
-            $sdp->sdp,
-            $this->user->id,
-            $id,
-            false,
-            $to,
-            'session-accept'
+            sdp: $sdp->sdp,
+            sid: $id,
+            responder: $to,
+            action: 'session-accept'
         );
 
         $si = new SessionInitiate;
         $si->setTo($to)
-            ->setOffer($stj->generate())
+            ->setJingle($stj->generate())
             ->request();
     }
 
@@ -626,19 +682,17 @@ class Visio extends Base
         $ufrag = $sdp->usernameFragment ?? null;
 
         $stj = new SDPtoJingle(
-            'a=' . $sdp->candidate,
-            $this->user->id,
-            $id,
-            false,
-            $to,
-            'transport-info',
-            $sdp->sdpMid,
-            $ufrag
+            sdp: 'a=' . $sdp->candidate,
+            sid: $id,
+            responder: $to,
+            action: 'transport-info',
+            mid: $sdp->sdpMid,
+            ufrag: $ufrag
         );
 
         $si = new SessionInitiate;
         $si->setTo($to)
-            ->setOffer($stj->generate())
+            ->setJingle($stj->generate())
             ->request();
     }
 
@@ -681,6 +735,22 @@ class Visio extends Base
             $this->packedEvent('jingle_message', $message);
         }
 
+        Toast::send($this->__('visio.ended'));
         $this->rpc('MovimJingles.terminateAll', $reason);
+    }
+
+    private function filterSDPMedia(string $sdp, string $mediaId)
+    {
+        // Ugly but simple
+        $exp = explode('m=', $sdp);
+        $selected = [];
+
+        foreach ($exp as $media) {
+            if (str_contains($media, 'a=mid:' . $mediaId)) {
+                array_push($selected, $media);
+            }
+        }
+
+        return $exp[0] . 'm=' . implode('m=', $selected);
     }
 }
