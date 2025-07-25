@@ -1,7 +1,11 @@
 Movim Changelog
 ================
 
-v0.31 (master)
+v0.31.1 (master)
+---------------------------
+* Add a copy external link button on the Posts
+
+v0.31
 ---------------------------
 * Implement XEP-0433: Extended Channel Search to replace the historical implementation
 * Allow to search Channels in the global directory directly from the Search bar
