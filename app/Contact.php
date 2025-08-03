@@ -52,7 +52,7 @@ class Contact extends Model
             from presences
             group by jid) as presences
             '), 'presences.jid', '=', 'contacts.id')
-            ->orderBy('presences.value');
+            ->orderBy('presences.value', 'asc');
     }
 
     public function save(array $options = [])
@@ -389,7 +389,7 @@ class Contact extends Model
 
     public function isBlocked(): bool
     {
-        return \App\User::me()->hasBlocked($this->id, true);
+        return me()->hasBlocked($this->id, true);
     }
 
     public function isEmpty(): bool
@@ -434,7 +434,7 @@ class Contact extends Model
 
     public function isMe(): bool
     {
-        return ($this->id == \App\User::me()->id);
+        return ($this->id == me()->id);
     }
 
     public function isPublic(): bool

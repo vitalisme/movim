@@ -10,7 +10,13 @@ use React\Http\Message\Response;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 
-use function React\Async\await;
+/**
+ * Me
+ */
+function me(bool $reload = false)
+{
+    return \App\User::me($reload);
+}
 
 /**
  * Log an error
@@ -702,7 +708,7 @@ function requestAsyncURL(string $url, int $timeout = 10, array $headers = []): P
 /**
  * @desc Request the Resolver Worker
  */
-function requestResolverWorker(string $url, int $timeout = 5): PromiseInterface
+function requestResolverWorker(string $url, int $timeout = 30): PromiseInterface
 {
     $connector = new React\Socket\FixedUriConnector(
         'unix://' . RESOLVER_SOCKET,
