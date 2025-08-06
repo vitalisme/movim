@@ -11,6 +11,8 @@ v0.31.1 (master)
 * Add a ContactBlogConfig widget to notify the user about a Private blog configuration
 * Fix #1270 Add PeerTube embedding support in Posts
 * Refactor the embbeding code and optimize the eager loading of attachments in Posts
+* Add a "Scroll to Message in History" feature
+* Implement full text search of Message bodies using the PostgreSQL tsvector and tssearch features
 
 v0.31
 ---------------------------

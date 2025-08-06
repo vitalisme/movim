@@ -40,25 +40,6 @@ class Chat extends \Movim\Widget\Base
 {
     private $_pagination = 50;
     private $_wrapper = [];
-    private $_messageTypes = [
-        'chat',
-        'headline',
-        'invitation',
-        'jingle_incoming',
-        'jingle_outgoing',
-        'jingle_end',
-        'jingle_retract',
-        'jingle_reject'
-    ];
-    private $_messageTypesMuc = [
-        'groupchat',
-        'muji_propose',
-        'muji_retract',
-        'muc_owner',
-        'muc_admin',
-        'muc_outcast',
-        'muc_member'
-    ];
     private $_mucPresences = [];
 
     public function load()
@@ -1040,6 +1021,53 @@ class Chat extends \Movim\Widget\Base
     }
 
     /**
+     * @brief Get a specific message contect
+     */
+    public function ajaxGetMessageContext(string $jid, int $mid)
+    {
+        if (!validateJid($jid)) return;
+
+        $contextMessage = \App\Message::jid($jid)
+            ->where('published', '<=', function ($query) use ($mid) {
+                $query->select('published')
+                    ->from('messages')
+                    ->where('mid', $mid);
+            })
+            ->orderBy('published', 'desc')
+            ->take(1)
+            ->skip(3)
+            ->first();
+
+        if ($contextMessage) {
+            $messages = \App\Message::jid($jid)
+                ->where('published', '>=', $contextMessage->published);
+
+            $messages = $contextMessage->isMuc()
+                ? $messages->whereIn('type', Message::MESSAGE_TYPE_MUC)->whereNull('subject')
+                : $messages->whereIn('type', Message::MESSAGE_TYPE);
+
+            $messages = $messages->orderBy('published', 'asc')
+                ->withCount('reactions')
+                ->take($this->_pagination)
+                ->get();
+
+            if ($messages->count() > 0) {
+                $messages = $messages->reverse();
+
+                foreach ($messages as $message) {
+                    $this->prepareMessage($message);
+                }
+
+                $this->rpc('MovimTpl.fill', '#' . cleanupId($jid) . '-conversation', '');
+                $this->rpc('MovimUtils.addClass', '#scroll_now.button.action', 'show');
+                $this->rpc('Chat.appendMessagesWrapper', $this->_wrapper, true);
+                $this->rpc('Chat.scrollAndBlinkMessageMid', $mid);
+                $this->_wrapper = [];
+            }
+        }
+    }
+
+    /**
      * @brief Get the chat history
      *
      * @param string jid
@@ -1047,9 +1075,7 @@ class Chat extends \Movim\Widget\Base
      */
     public function ajaxGetHistory(string $jid, ?string $date = null, bool $muc = false, bool $prepend = true, bool $tryMam = true)
     {
-        if (!validateJid($jid)) {
-            return;
-        }
+        if (!validateJid($jid)) return;
 
         $messages = \App\Message::jid($jid);
 
@@ -1058,8 +1084,8 @@ class Chat extends \Movim\Widget\Base
         }
 
         $messages = $muc
-            ? $messages->whereIn('type', $this->_messageTypesMuc)->whereNull('subject')
-            : $messages->whereIn('type', $this->_messageTypes);
+            ? $messages->whereIn('type', Message::MESSAGE_TYPE_MUC)->whereNull('subject')
+            : $messages->whereIn('type', Message::MESSAGE_TYPE);
 
         $messages = $messages->orderBy('published', 'desc')
             ->withCount('reactions')
@@ -1234,8 +1260,8 @@ class Chat extends \Movim\Widget\Base
         $messagesQuery = \App\Message::jid($jid);
 
         $messagesQuery = $muc
-            ? $messagesQuery->whereIn('type', $this->_messageTypesMuc)->whereNull('subject')
-            : $messagesQuery->whereIn('type', $this->_messageTypes);
+            ? $messagesQuery->whereIn('type', Message::MESSAGE_TYPE_MUC)->whereNull('subject')
+            : $messagesQuery->whereIn('type', Message::MESSAGE_TYPE);
 
         /**
          * The object need to be cloned there for MySQL, looks like the pagination/where is kept somewhere in between…
@@ -1683,11 +1709,11 @@ class Chat extends \Movim\Widget\Base
         return $this->_wrapper;
     }
 
-    public function prepareEmbed(EmbedLight $embed, bool $withLink = false)
+    public function prepareEmbed(EmbedLight $embed, ?Message $message = null)
     {
         $tpl = $this->tpl();
         $tpl->assign('embed', $embed);
-        $tpl->assign('withlink', $withLink);
+        $tpl->assign('message', $message);
         return $tpl->draw('_chat_embed');
     }
 
