@@ -37,7 +37,6 @@ v0.31
 * Fix #1437 Generalize the instance nickname usage on the public blog and syndication feed, add a warning message if the instance nickname is changed
 * Rename the config page to configuration
 * Fix XMPP URI handling in Share
-* Add Pronouns support in vCard4
 * Add a toggle state to the Chat page buttons to switch quickly between one-to-one and rooms
 * Redesign the subscription page
 * Add WebRTC multi-track support
