@@ -121,7 +121,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: movim\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-02 23:43+0200\n"
+"POT-Creation-Date: 2025-07-14 21:08+0200\n"
 "PO-Revision-Date: 2015-06-24 09:45+0000\n"
 "Last-Translator: Lyn, 2022\n"
 "Language-Team: Swedish (http://app.transifex.com/movim/movim/language/sv/)\n"
@@ -459,19 +459,16 @@ msgid "File"
 msgstr ""
 
 #: [avatar]updated
-#, fuzzy
 msgid "Profile Picture Updated"
-msgstr "Profil uppdaterad"
+msgstr ""
 
 #: [avatar]not_updated
-#, fuzzy
 msgid "Profile Picture Not Updated"
-msgstr "Profil uppdaterad"
+msgstr ""
 
 #: [avatar]change
-#, fuzzy
 msgid "Change my profile picture"
-msgstr "Ändra mitt lösenord"
+msgstr ""
 
 #: [banner]change
 msgid "Change my banner"
@@ -654,7 +651,7 @@ msgstr ""
 msgid "Refused call"
 msgstr ""
 
-#: [chat]jingle_end [visio]ended
+#: [chat]jingle_end
 msgid "Call ended"
 msgstr ""
 
@@ -1865,7 +1862,7 @@ msgstr ""
 msgid "This is a re-post from %s"
 msgstr ""
 
-#: [post]repost_profile
+#: [post]see_profile
 msgid "See %s profile"
 msgstr ""
 
@@ -1883,14 +1880,6 @@ msgstr ""
 
 #: [post]read_time_plural
 msgid "%s minutes"
-msgstr ""
-
-#: [post]public_title
-msgid "Publish this post publicly"
-msgstr ""
-
-#: [post]public_text
-msgid "This will allow anyone outside Movim to have access to your publication"
 msgstr ""
 
 #: [post]public_preview
@@ -1971,6 +1960,10 @@ msgstr ""
 
 #: [post]commented
 msgid "Commented"
+msgstr ""
+
+#: [post]subscription_required
+msgid "You must be subscribed to %s to see this publication"
 msgstr ""
 
 #: [hello]contact_post
@@ -2103,6 +2096,18 @@ msgstr ""
 
 #: [publish]publish_error_forbidden
 msgid "You are not authorized to publish there"
+msgstr ""
+
+#: [publish]blog_presence
+msgid "Your blog is only accessible to your subscribers. You can make it accessible to anyone in the settings page."
+msgstr ""
+
+#: [publish]web_title
+msgid "Publish this post on your public blog"
+msgstr ""
+
+#: [publish]web_text
+msgid "This will allow anyone outside Movim to have access to your publication"
 msgstr ""
 
 #: [publishhelp]title [page]help
@@ -2638,15 +2643,7 @@ msgid "Story deleted"
 msgstr ""
 
 #: [subscribe]info
-msgid "Movim is a decentralized social network, before creating a new account you need to choose a server to register."
-msgstr ""
-
-#: [subscribe]server_question
-msgid "Your server here?"
-msgstr ""
-
-#: [subscribe]server_contact
-msgid "Contact us to add yours to the officially supported servers list"
+msgid "Movim is a decentralized social network, you are invited to register on the following XMPP server(s)"
 msgstr ""
 
 #: [feed]title
@@ -2813,6 +2810,10 @@ msgstr ""
 msgid "…connecting"
 msgstr "…ansluta"
 
+#: [visio]ended
+msgid "End of call"
+msgstr ""
+
 #: [visio]no_participants_left
 msgid "All participants have left the call"
 msgstr ""
@@ -2922,12 +2923,11 @@ msgid "News"
 msgstr "Nyheter"
 
 #: [page]avatar
-#, fuzzy
 msgid "Profile Picture"
-msgstr "Profil uppdaterad"
+msgstr ""
 
 #: [page]chats
-msgid "Direct Messages"
+msgid "Messages"
 msgstr ""
 
 #: [page]publish
@@ -3787,12 +3787,3 @@ msgstr ""
 #: [field]type_here
 msgid "Type here"
 msgstr ""
-
-#~ msgid "No subscriptions"
-#~ msgstr "Ingen prenumerationer"
-
-#~ msgid "Global search"
-#~ msgstr "Global sökning"
-
-#~ msgid "Chats"
-#~ msgstr "Chats"

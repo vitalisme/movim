@@ -110,7 +110,8 @@ var Rooms = {
         var parent = document.querySelector('#rooms').parentElement;
 
         parent.onscroll = e => {
-            if (e.target.scrollTop + 5 >= document.querySelector('#rooms').offsetTop) {
+            if ((e.target.scrollHeight <= e.target.scrollTop + e.target.offsetHeight + 1)
+                || (e.target.scrollTop + 5 >= document.querySelector('#rooms').offsetTop)) {
                 Rooms.scrollToRooms();
             } else {
                 Rooms.scrollToChats();
@@ -160,7 +161,7 @@ var Rooms = {
         document.querySelector('#rooms ul.list.rooms').innerHTML = '';
     },
 
-    setRoom: function (id, html, noSecondRefresh) {
+    setRoom: function (id, html) {
         var listSelector = '#rooms ul.list.rooms ';
         var list = document.querySelector(listSelector);
         var element = list.querySelector('#' + id);
@@ -182,8 +183,6 @@ var Rooms = {
         if (i == rooms.length) {
             MovimTpl.append(listSelector, html);
         }
-
-        Rooms.refresh(noSecondRefresh);
     },
 
     clearAllActives: function () {

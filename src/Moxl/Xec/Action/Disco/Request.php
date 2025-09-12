@@ -27,15 +27,21 @@ class Request extends Action
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $this->pack([$this->_to, $this->_node]);
-
         // Info
         $info = new \App\Info;
         $info->set($stanza, $this->_node, $this->_parent);
 
+        /**
+         * https://xmpp.org/extensions/xep-0390.html#rules-processing-caching
+         */
+        if (
+            str_starts_with($info->node, 'urn:xmpp:caps')
+            && !$info->checkCapabilityHash()
+        ) return;
+
         $found = \App\Info::where('server', $info->server)
-                          ->where('node', $info->node)
-                          ->first();
+            ->where('node', $info->node)
+            ->first();
 
         if ($found) {
             $found->set(
@@ -52,8 +58,11 @@ class Request extends Action
             $info->save();
         }
 
-        if (!$info->identities->contains('category', 'account')
-        && !$info->identities->contains('category', 'client')) {
+        if (
+            !$info->identities->contains('category', 'account')
+            && !$info->identities->contains('category', 'client')
+        ) {
+            $this->pack($info);
             $this->deliver();
         }
     }

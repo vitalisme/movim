@@ -1,15 +1,35 @@
 Movim Changelog
 ================
 
-v0.30.1 (master)
+v0.32 (master)
 ---------------------------
-* Wait 2min for the pong in ChatroomPings before timing out, it seems that some services are realllyyyy slow to reply
-* Remove HTTP ranges in the Picture proxy and simply stop Curl when the download is above the declared file size, small refactor
-* Redesign the avatar and banner edition layout
-* Enable animated WebP pictures support in the images proxyfier
-* Implement XEP-0392: Consistent Color Generation
-* Refactor the color system and adapt the internal palette
-* Dropping support for MySQL, only MariaDB and PostgreSQL are supported by now
+* Add a copy external link button on the Posts
+* Improve the Communities discovery flow when visiting a server
+* Add a MAMEarliest table to keep track of the earliest message when requesting MAM
+* Improve the contact block/unblock flows
+* Add a me() utils
+* Add a ContactBlogConfig widget to notify the user about a Private blog configuration
+* Fix #1270 Add PeerTube embedding support in Posts
+* Refactor the embbeding code and optimize the eager loading of attachments in Posts
+* Add a "Scroll to Message in History" feature
+* Implement full text search of Message bodies using the PostgreSQL tsvector and tssearch features
+* Refactor the Public URL/Public Blog flow and texts
+* Implement XEP-0390: Entity Capabilities 2.0
+* Refactor all the OMEMO related code, drop the Bundles table, handle most of the logic in the JS, refactor the fingerprints resolver, cleanup
+* Fix #1459 Allow public posts to be read without Javascript enabled
+* Fix #1460 Change geturl and seturl to text in Upload table
+* Try to Resolve Pubsub Posts from incoming messages if they are not present in the database
+* Implement the Jingle Finish event
+* disco#info the bookmarked rooms that don't have an Info yet
+* Fix and refactor Disco Request resolution
+* Fix Message Retraction in chatrooms
+* Completely delete the User (and related data) when someone is leaving the instance
+* Fix user clear when unregistering from a Chatroom
+* Implement XEP-0300: Use of Cryptographic Hash Functions in XMPP
+* Implement XEP-0492: Chat notification settings
+
+v0.31
+---------------------------
 * Implement XEP-0433: Extended Channel Search to replace the historical implementation
 * Allow to search Channels in the global directory directly from the Search bar
 * Introducing the URL Resolver Worker, that resolves the shared URLs in a non-blocking and concurrential way
@@ -19,6 +39,24 @@ v0.30.1 (master)
 * Fix XMPP URI handling in Share
 * Add a toggle state to the Chat page buttons to switch quickly between one-to-one and rooms
 * Redesign the subscription page
+* Add WebRTC multi-track support
+* Implement Jingle content-modify to refresh the whole SDP and allow simultanous screen sharing
+* Add a placeholder if a Post is not accessible without a contact subscription
+* Add a little helper in the Publish widget when publishing publicly and the blog is configured on presence
+* Add SDP to Jingle and Jingle to SDP debug tool
+* Check the required PHP extensions before starting the daemon
+* Fix #1452 Use a textNode to change password to automatically escape the characters
+* Remove the Location widget
+
+v0.30.1
+---------------------------
+* Wait 2min for the pong in ChatroomPings before timing out, it seems that some services are realllyyyy slow to reply
+* Remove HTTP ranges in the Picture proxy and simply stop Curl when the download is above the declared file size, small refactor
+* Redesign the avatar and banner edition layout
+* Enable animated WebP pictures support in the images proxyfier
+* Implement XEP-0392: Consistent Color Generation
+* Refactor the color system and adapt the internal palette
+* Dropping support for MySQL, only MariaDB and PostgreSQL are supported by now
 
 v0.30
 ---------------------------
@@ -615,7 +653,7 @@ v0.14.1
  * Display Gateway connection status
  * CSS fixes in Forms
  * Disable the dropdown in Form if there is only one choice
- * Add support for embeded images in Forms (for CAPTCHA)
+ * Add support for embedded images in Forms (for CAPTCHA)
  * Chat bubbles a bit more compact
  * Display single emojis as small stickers
  * Display chat states in MUC, handle the chat states with a new ChatStates class

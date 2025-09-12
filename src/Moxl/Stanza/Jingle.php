@@ -80,22 +80,22 @@ class Jingle
         \Moxl\API::sendDom($dom);
     }
 
-    public static function messageFinish(string $to, string $id)
+    public static function messageFinish(string $to, string $id, string $reason)
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $message = $dom->createElementNS('jabber:client', 'message');
         $message->setAttribute('to', $to);
         $dom->appendChild($message);
 
-        $retract = $dom->createElementNS('urn:xmpp:jingle-message:0', 'finish');
-        $retract->setAttribute('id', $id);
-        $message->appendChild($retract);
+        $finish = $dom->createElementNS('urn:xmpp:jingle-message:0', 'finish');
+        $finish->setAttribute('id', $id);
+        $message->appendChild($finish);
 
-        $reason = $dom->createElementNS('urn:xmpp:jingle:1', 'reason');
-        $retract->appendChild($reason);
+        $jingleReason = $dom->createElementNS('urn:xmpp:jingle:1', 'reason');
+        $finish->appendChild($jingleReason);
 
-        $reason->appendChild($dom->createElement('success'));
-        $reason->appendChild($dom->createElement('text', 'Success'));
+        $jingleReason->appendChild($dom->createElement($reason));
+        $jingleReason->appendChild($dom->createElement('text', 'Success'));
 
         \Moxl\API::sendDom($dom);
     }
@@ -116,13 +116,24 @@ class Jingle
         \Moxl\API::sendDom($dom);
     }
 
-    public static function sessionInitiate($to, $offer)
+    public static function sessionInitiate(string $to, $jingle)
     {
-        $dom = new \DOMDocument('1.0', 'UTF-8');
-        $jingle = $dom->createElementNS('urn:xmpp:jingle:1', 'jingle');
-        $jingle->setAttribute('action', 'session-terminate');
+        \Moxl\API::request(\Moxl\API::iqWrapper($jingle, $to, 'set'));
+    }
 
-        \Moxl\API::request(\Moxl\API::iqWrapper($offer, $to, 'set'));
+    public static function contentAdd(string $to, $jingle)
+    {
+        \Moxl\API::request(\Moxl\API::iqWrapper($jingle, $to, 'set'));
+    }
+
+    public static function contentModify(string $to, $jingle)
+    {
+        \Moxl\API::request(\Moxl\API::iqWrapper($jingle, $to, 'set'));
+    }
+
+    public static function contentRemove(string $to, $jingle)
+    {
+        \Moxl\API::request(\Moxl\API::iqWrapper($jingle, $to, 'set'));
     }
 
     public static function sessionTerminate($to, $sid, $value)

@@ -18,6 +18,7 @@ class CommunitiesServer extends \Movim\Widget\Base
         $this->registerEvent('disco_items_error', 'onDiscoError');
         $this->registerEvent('disco_items_errorremoteservernotfound', 'onRemoteServerNotFound');
         $this->registerEvent('disco_items_errorremoteservertimeout', 'onRemoteServerNotFound');
+        $this->registerEvent('disco_request_handle', 'onDiscoRequest');
         $this->registerEvent('pubsub_create_handle', 'onCreate');
         $this->registerEvent('pubsub_testcreate_handle', 'onTestCreate');
         $this->registerEvent('pubsub_testcreate_error', 'onTestCreateError');
@@ -47,6 +48,15 @@ class CommunitiesServer extends \Movim\Widget\Base
         $origin = $packet->content;
 
         $this->rpc('MovimTpl.fill', '#communities_server', $this->prepareCommunitiesServer($origin));
+    }
+
+    public function onDiscoRequest($packet)
+    {
+        $info = $packet->content;
+
+        if ($info) {
+            $this->rpc('MovimTpl.replace', '#' . cleanupId($info->server . $info->node), $this->prepareTicket($info));
+        }
     }
 
     public function onDiscoError($packet)
@@ -100,7 +110,7 @@ class CommunitiesServer extends \Movim\Widget\Base
 
         $t = new TestCreate;
         $t->setTo($origin)
-          ->request();
+            ->request();
     }
 
     public function ajaxAddConfirm($origin, $form)
@@ -124,9 +134,9 @@ class CommunitiesServer extends \Movim\Widget\Base
 
         $c = new Create;
         $c->setTo($origin)
-          ->setNode($uri)
-          ->setName($form->name->value)
-          ->request();
+            ->setNode($uri)
+            ->setName($form->name->value)
+            ->request();
     }
 
     public function prepareCommunitiesServer($origin)
@@ -153,13 +163,14 @@ class CommunitiesServer extends \Movim\Widget\Base
             ->get(['infos.*', 'published']);
 
         // Lets push back the null content last
-        $nodes = $nodes->reject(function($node){
+        $nodes = $nodes->reject(function ($node) {
             return $node->published == null;
         })
-        ->merge($nodes->filter(function($node){
-            return $node->published == null;
-            })
-        );
+            ->merge(
+                $nodes->filter(function ($node) {
+                    return $node->published == null;
+                })
+            );
 
         $view = $this->tpl();
         $view->assign('item', $item);
@@ -177,6 +188,7 @@ class CommunitiesServer extends \Movim\Widget\Base
     {
         $view = $this->tpl();
         $view->assign('community', $community);
+        $view->assign('id', cleanupId($community->server . $community->node));
         return $view->draw('_communitiesserver_ticket');
     }
 

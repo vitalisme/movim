@@ -74,10 +74,10 @@
                 <i class="material-symbols icon green blink">phone_in_talk</i>
                 {$c->__('visio.in_call')} •
             {/if}
-            {if="$message->retracted"}
+            {if="$message->encrypted"}
+                <i class="material-symbols fill">lock</i> {if="$message->retracted"}{$c->__('message.retracted')}{else}{$c->__('message.encrypted')}{/if}
+            {elseif="$message->retracted"}
                 <i class="material-symbols">delete</i> {$c->__('message.retracted')}
-            {elseif="$message->encrypted"}
-                <i class="material-symbols fill">lock</i> {$c->__('message.encrypted')}
             {elseif="$message->type == 'invitation'"}
                 <i class="material-symbols icon gray">outgoing_mail</i> {$c->__('message.invitation')}
             {elseif="$message->type == 'jingle_incoming'"}
@@ -86,6 +86,8 @@
                 <i class="material-symbols icon gray">phone_missed</i> {$c->__('chat.jingle_retract')}
             {elseif="$message->type == 'jingle_reject'"}
                 <i class="material-symbols icon orange">phone_missed</i> {$c->__('chat.jingle_reject')}
+            {elseif="$message->type == 'jingle_finish'"}
+                <i class="material-symbols icon red">phone_disabled</i> {$c->__('chat.jingle_end')}
             {elseif="$message->type == 'jingle_outgoing'"}
                 <i class="material-symbols icon blue">call</i> {$c->__('chat.jingle_outgoing')}
             {elseif="$message->type == 'jingle_end'"}

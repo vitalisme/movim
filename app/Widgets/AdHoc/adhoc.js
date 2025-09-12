@@ -1,14 +1,6 @@
 var AdHoc = {
-    init: function () {
-        var parts = MovimUtils.urlParts();
-        if (parts.page === "contact") {
-            AdHoc_ajaxGet(parts.params[0]);
-        } else {
-            AdHoc_ajaxGet();
-        }
-    },
     refresh: function () {
-        var items = document.querySelectorAll('.adhoc_widget li:not(.subheader)');
+        var items = document.querySelectorAll('.adhoc_widget .actions li:not(.subheader)');
         var i = 0;
 
         while (i < items.length) {
@@ -30,7 +22,10 @@ var AdHoc = {
         }
 
         var form = document.querySelector('#dialog form[name=command]');
-        form.addEventListener('input', e => AdHoc.checkFormValidity());
+
+        if (form) {
+            form.addEventListener('input', e => AdHoc.checkFormValidity());
+        }
 
         AdHoc.checkFormValidity();
     },
@@ -51,7 +46,3 @@ var AdHoc = {
         }
     }
 }
-
-MovimWebsocket.attach(function () {
-    AdHoc.init();
-});

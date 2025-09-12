@@ -5,7 +5,6 @@ namespace App;
 use Movim\ImageSize;
 
 use Awobaz\Compoships\Database\Eloquent\Model;
-use Movim\CurrentCall;
 
 class Conference extends Model
 {
@@ -14,11 +13,11 @@ class Conference extends Model
     protected $fillable = ['conference', 'name', 'nick', 'autojoin', 'pinned'];
     protected $with = ['contact', 'mujiCalls'];
 
-    public static $xmlnsNotifications = 'xmpp:movim.eu/notifications:0';
+    public static $xmlnsNotifications = 'urn:xmpp:notification-settings:0';
     public static $xmlnsPinned = 'urn:xmpp:bookmarks-pinning:0';
     public static $notifications = [
         0 => 'never',
-        1 => 'quoted',
+        1 => 'on-mention',
         2 => 'always'
     ];
 
@@ -39,12 +38,12 @@ class Conference extends Model
     public function presences()
     {
         return $this->hasMany('App\Presence', ['jid', 'session_id'], ['conference', 'session_id'])
-                    ->where('resource', '!=', '')
-                    ->where('value', '<', 5)
-                    ->orderBy('mucrole')
-                    ->orderBy('mucaffiliation', 'desc')
-                    ->orderBy('value')
-                    ->orderBy('resource');
+            ->where('resource', '!=', '')
+            ->where('value', '<', 5)
+            ->orderBy('mucrole')
+            ->orderBy('mucaffiliation', 'desc')
+            ->orderBy('value')
+            ->orderBy('resource');
     }
 
     public function mujiCalls()
@@ -55,88 +54,88 @@ class Conference extends Model
 
     public function otherPresences()
     {
-        return $this->presences()->where('mucjid', '!=', \App\User::me()->id);
+        return $this->presences()->where('mucjid', '!=', me()->id);
     }
 
     public function unreads()
     {
         return $this->hasMany('App\Message', 'jidfrom', 'conference')
-                    ->where('user_id', \App\User::me()->id)
-                    ->where('type', 'groupchat')
-                    ->whereNull('subject')
-                    ->where('seen', false);
+            ->where('user_id', me()->id)
+            ->where('type', 'groupchat')
+            ->whereNull('subject')
+            ->where('seen', false);
     }
 
     public function quoted()
     {
         return $this->hasMany('App\Message', 'jidfrom', 'conference')
-                    ->where('user_id', \App\User::me()->id)
-                    ->where('type', 'groupchat')
-                    ->whereNull('subject')
-                    ->where('quoted', true)
-                    ->where('seen', false);
+            ->where('user_id', me()->id)
+            ->where('type', 'groupchat')
+            ->whereNull('subject')
+            ->where('quoted', true)
+            ->where('seen', false);
     }
 
     public function presence()
     {
         return $this->hasOne('App\Presence', ['jid', 'session_id'], ['conference', 'session_id'])
-                    ->where('value', '<', 5)
-                    ->where('mucjid', \App\User::me()->id);
+            ->where('value', '<', 5)
+            ->where('mucjid', me()->id);
     }
 
     public function members()
     {
         return $this->hasMany('App\Member', 'conference', 'conference')
-                    ->orderBy('role')
-                    ->orderBy('affiliation', 'desc');
+            ->orderBy('role')
+            ->orderBy('affiliation', 'desc');
     }
 
     public function activeMembers()
     {
         return $this->hasMany('App\Member', 'conference', 'conference')
-                    ->where('affiliation', '!=', 'outcast')
-                    ->where('affiliation', '!=', 'none')
-                    ->orderBy('role')
-                    ->orderBy('affiliation', 'desc');
+            ->where('affiliation', '!=', 'outcast')
+            ->where('affiliation', '!=', 'none')
+            ->orderBy('role')
+            ->orderBy('affiliation', 'desc');
     }
 
     public function pictures()
     {
         return $this->hasMany('App\Message', 'jidfrom', 'conference')
-                    ->where('user_id', \App\User::me()->id)
-                    ->where('type', 'groupchat')
-                    ->where('picture', true)
-                    ->where('retracted', false)
-                    ->orderBy('published', 'desc');
+            ->where('user_id', me()->id)
+            ->where('type', 'groupchat')
+            ->where('picture', true)
+            ->where('retracted', false)
+            ->orderBy('published', 'desc');
     }
 
     public function links()
     {
         return $this->hasMany('App\Message', 'jidfrom', 'conference')
-                    ->where('user_id', \App\User::me()->id)
-                    ->where('type', 'groupchat')
-                    ->whereNotNull('urlid')
-                    ->where('picture', false)
-                    ->where('retracted', false)
-                    ->orderBy('published', 'desc');
+            ->where('user_id', me()->id)
+            ->where('type', 'groupchat')
+            ->whereNotNull('urlid')
+            ->where('picture', false)
+            ->where('retracted', false)
+            ->orderBy('published', 'desc');
     }
 
     public function info()
     {
         return $this->hasOne('App\Info', 'server', 'conference')
-                    ->where(function ($query) {
-                        $query->where('node', function ($query) {
-                            $query->select('node')
-                                ->from('presences')
-                                ->where('session_id', \App\User::me()->session->id)
-                                ->whereColumn('jid', 'infos.server')
-                                ->where('resource', '')
-                                ->take(1);
-                        })
-                        ->orWhere('node', '');
-                    })
-                    ->whereCategory('conference')
-                    ->whereType('text');
+            ->where(function ($query) {
+                $query->where('node', function ($query) {
+                    $query->select('node')
+                        ->from('presences')
+                        ->where('session_id', me()->session->id)
+                        ->whereColumn('jid', 'infos.server')
+                        ->where('resource', '')
+                        ->take(1);
+                })
+                    ->orWhere('node', '');
+            })
+            ->whereCategory('conference')
+            ->whereType('text');
     }
 
     public function contact()
@@ -153,16 +152,46 @@ class Conference extends Model
         $this->bookmarkversion = (int)substr((string)$item->conference->attributes()->xmlns, -1, 1);
 
         if ($item->conference->extensions) {
-            if ($item->conference->extensions && $item->conference->extensions->notifications
-            && $item->conference->extensions->notifications->attributes()->xmlns == self::$xmlnsNotifications) {
-                $this->notify = (int)array_flip(self::$notifications)[
-                    (string)$item->conference->extensions->notifications->attributes()->notify
+            if (
+                $item->conference->extensions->notify
+                && $item->conference->extensions->notify->attributes()->xmlns == self::$xmlnsNotifications
+            ) {
+                if ($item->conference->extensions->notify->never) {
+                    $this->notify = 0;
+                }
+
+                if ($item->conference->extensions->notify->{'on-mention'}) {
+                    $this->notify = 1;
+                }
+
+                if ($item->conference->extensions->notify->always) {
+                    $this->notify = 2;
+                }
+
+                unset($item->conference->extensions->notify);
+
+                // Remove the deprecated extension if present
+                if ($item->conference->extensions->notifications) {
+                    unset($item->conference->extensions->notifications);
+                }
+            } else if ( // Deprecated
+                $item->conference->extensions->notifications
+                && $item->conference->extensions->notifications->attributes()->xmlns == 'xmpp:movim.eu/notifications:0'
+            ) {
+                $notifications = [
+                    'never' => 0,
+                    'quoted' => 1,
+                    'always' => 2
                 ];
+
+                $this->notify = (int)$notifications[(string)$item->conference->extensions->notifications->attributes()->notify];
                 unset($item->conference->extensions->notifications);
             }
 
-            if ($item->conference->extensions && $item->conference->extensions->pinned
-            && in_array($item->conference->extensions->pinned->attributes()->xmlns, [self::$xmlnsPinned, 'xmpp:movim.eu/pinned:0'])) {
+            if (
+                $item->conference->extensions->pinned
+                && in_array($item->conference->extensions->pinned->attributes()->xmlns, [self::$xmlnsPinned, 'xmpp:movim.eu/pinned:0'])
+            ) {
                 $this->pinned = true;
                 unset($item->conference->extensions->pinned);
             }
@@ -181,7 +210,7 @@ class Conference extends Model
         return isset($this->presence);
     }
 
-    public function getNotificationKeyAttribute()
+    public function getNotificationKeyAttribute(): string
     {
         return self::$notifications[$this->notify];
     }
@@ -190,6 +219,10 @@ class Conference extends Model
     {
         if (!empty($this->name)) {
             return $this->name;
+        }
+
+        if ($this->info) {
+            return $this->info->name;
         }
 
         if ($this->isGroupChat() && $this->members()->count() > 0) {
@@ -211,14 +244,14 @@ class Conference extends Model
 
     public function getSubjectAttribute()
     {
-        $subject = \App\User::me()
-                            ->messages()
-                            ->jid($this->conference)
-                            ->whereNotNull('subject')
-                            ->whereNull('body')
-                            ->where('type', 'groupchat')
-                            ->orderBy('published', 'desc')
-                            ->first();
+        $subject = me()
+            ->messages()
+            ->jid($this->conference)
+            ->whereNotNull('subject')
+            ->whereNull('body')
+            ->where('type', 'groupchat')
+            ->orderBy('published', 'desc')
+            ->first();
 
         return $subject ? $subject->subject : null;
     }
@@ -243,7 +276,9 @@ class Conference extends Model
     public function currentMuji(): ?MujiCall
     {
         return $this->mujiCalls->filter(
-            function ($muji) { return $muji->joined; }
+            function ($muji) {
+                return $muji->joined;
+            }
         )->first();
     }
 

@@ -7,20 +7,27 @@ use Moxl\Stanza\Register;
 
 class Remove extends Action
 {
+    protected ?string $_to = null;
+
     public function request()
     {
         $this->store();
-        Register::remove();
+        Register::remove($this->_to);
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $this->deliver();
+        if ($this->_to == null) {
+            $this->deliver();
+        }
     }
 
     public function error(string $errorId, ?string $message = null)
     {
-        $this->pack($message);
-        $this->deliver();
+        // We don't handle errors for now if we unregister from a specific thing
+        if ($this->_to == null) {
+            $this->pack($message);
+            $this->deliver();
+        }
     }
 }

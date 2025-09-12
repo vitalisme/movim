@@ -13,12 +13,12 @@ class API
         $iq = $dom->createElementNS('jabber:client', 'iq');
         $dom->appendChild($iq);
 
-        $me = \App\User::me();
+        $me = me();
 
         if ($me->id && $me->session && $me->session->resource) {
             $iq->setAttribute(
                 'from',
-                $me->id.'/'.$me->session->resource
+                $me->id . '/' . $me->session->resource
             );
         }
 

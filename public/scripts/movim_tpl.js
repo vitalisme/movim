@@ -14,6 +14,18 @@ var MovimTpl = {
     popAnchorKey: null,
     popAnchorAction: null,
 
+    loadingPage: function () {
+        document.body.classList.add('loading');
+        document.body.classList.remove('finished');
+    },
+    finishedPage: function () {
+        document.body.classList.add('finished');
+
+        setTimeout(e => {
+            document.body.classList.remove('loading', 'finished');
+        }, 1000);
+    },
+
     append: function (selector, html) {
         target = document.querySelector(selector);
         if (target) {
@@ -112,7 +124,7 @@ var MovimTpl = {
             moveX = event.targetTouches[0].pageX;
             MovimTpl.translateX = parseInt(moveX - MovimTpl.startX);
 
-            if (!nav.classList.contains('active')
+            if (nav && !nav.classList.contains('active')
                 && MovimTpl.startX < clientWidth / 15
                 && MovimTpl.startY > 56
                 && MovimTpl.translateX < nav.offsetWidth + delay
@@ -128,7 +140,7 @@ var MovimTpl = {
             moveX = event.targetTouches[0].pageX;
             MovimTpl.translateX = parseInt(moveX - MovimTpl.startX);
 
-            if (nav.classList.contains('active') && MovimTpl.translateX - delay < 0) {
+            if (nav && nav.classList.contains('active') && MovimTpl.translateX - delay < 0) {
                 MovimTpl.menuDragged = true;
                 event.stopPropagation();
                 nav.style.transform = 'translateX(' + (MovimTpl.translateX - delay) + 'px)';
@@ -138,15 +150,15 @@ var MovimTpl = {
 };
 
 MovimEvents.registerBody('touchstart', 'movimtpl', (event) => {
+    document.querySelector('body > nav').classList.remove('moving');
     MovimTpl.startX = event.targetTouches[0].pageX;
     MovimTpl.startY = event.targetTouches[0].pageY;
-    document.querySelector('body > nav').classList.remove('moving');
 });
 
 MovimEvents.registerBody('touchend', 'movimtpl', (event) => {
-    nav.classList.add('moving');
+    nav = document.querySelector('body > nav');
     nav.style.transform = '';
-
+    nav.classList.add('moving');
     percent = MovimTpl.translateX / clientWidth;
 
     if (MovimTpl.menuDragged) {

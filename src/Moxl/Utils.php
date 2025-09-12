@@ -2,13 +2,87 @@
 
 namespace Moxl;
 
+use App\Identity;
 use App\Post;
+use Illuminate\Support\Collection;
 
 class Utils
 {
+    public const CAPABILITY_HASH_ALGORITHM = 'sha-256';
+
+    /**
+     * https://xmpp.org/extensions/xep-0390.html#algorithm-hashnodes
+     */
+    public static function getCapabilityHashNode(string $capabilityHash, ?string $hash = Utils::CAPABILITY_HASH_ALGORITHM): string
+    {
+        return 'urn:xmpp:caps#' . $hash . '.' . $capabilityHash;
+    }
+
+    public static function getOwnCapabilityHash(?string $hash = Utils::CAPABILITY_HASH_ALGORITHM): string
+    {
+        return Utils::generateCapabilityHash(collect([Utils::getIdentity()]), Utils::getSupportedServices(), $hash);
+    }
+
+    /**
+     * https://xmpp.org/extensions/xep-0390.html#algorithm-example
+     */
+    public static function generateCapabilityHash(Collection $identities, array $features, ?string $hash = Utils::CAPABILITY_HASH_ALGORITHM)
+    {
+        $data = '';
+
+        asort($features);
+
+        foreach ($features as $feature) {
+            $data .= $feature . chr(31); // 0x1f (ASCII Unit Separator)
+        }
+
+        $data .= chr(28); // 0x1c (ASCII File Separator)
+
+        $identitiesData = [];
+
+        foreach ($identities as $identity) {
+            $identityData =
+                $identity->category . chr(31) .
+                $identity->type . chr(31);
+
+            $identityData .= $identity->lang ?? '';
+            $identityData .= chr(31);
+
+            $identityData .= $identity->name ?? '';
+            $identityData .= chr(31);
+
+            $identityData .= chr(30); // 0x1e (ASCII Record Separator)
+
+            array_push($identitiesData, $identityData);
+        }
+
+        asort($identitiesData);
+
+        foreach ($identitiesData as $identityData) {
+            $data .= $identityData;
+        }
+
+        $data .= chr(28);
+
+        $data .= chr(28);
+
+        return base64_encode(hash(IANAHashToPhp()[$hash], $data, true));
+    }
+
+    public static function getIdentity(): Identity
+    {
+        $identity = new Identity;
+        $identity->category = 'client';
+        $identity->type = 'web';
+        $identity->lang = null;
+        $identity->name = 'Movim';
+
+        return $identity;
+    }
+
     public static function getSupportedServices()
     {
-        return [
+        $features = [
             'urn:xmpp:microblog:0',
             Post::MICROBLOG_NODE . '+notify',
             Post::STORIES_NODE . '+notify',
@@ -81,6 +155,10 @@ class Utils
             //'http://jabber.org/protocol/tune',
             //'http://jabber.org/protocol/tune+notify';
         ];
+
+        asort($features);
+
+        return $features;
     }
 
     public static function injectConfigInX(\DOMNode $x, array $inputs)
@@ -106,7 +184,7 @@ class Utils
                 if ($value === 'false') {
                     $val->nodeValue = 'false';
                 } elseif (empty($val->nodeValue)) {
-                    $val->nodeValue = trim($value);
+                    $val->appendChild($x->ownerDocument->createTextNode(trim($value)));
                 }
             }
 

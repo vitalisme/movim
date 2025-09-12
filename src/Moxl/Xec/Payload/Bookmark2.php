@@ -8,19 +8,24 @@ class Bookmark2 extends Payload
 {
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        if (baseJid((string)$parent->attributes()->from) != \App\User::me()->id
-        || (string)$parent->attributes()->from == (string)$parent->attributes()->to) return;
+        if (
+            baseJid((string)$parent->attributes()->from) != me()->id
+            || (string)$parent->attributes()->from == (string)$parent->attributes()->to
+        ) return;
 
         if ($stanza->items->retract) {
-            \App\User::me()->session
-                           ->conferences()
-                           ->where('conference', (string)$stanza->items->retract->attributes()->id)
-                           ->delete();
+            me()->session
+                ->conferences()
+                ->where('conference', (string)$stanza->items->retract->attributes()->id)
+                ->delete();
+
+            $this->method('retract');
+            $this->deliver();
         } else {
             $conference = new Conference;
             $conference->set($stanza->items->item);
 
-            \App\User::me()->session->conferences()->where('conference', $conference->conference)->delete();
+            me()->session->conferences()->where('conference', $conference->conference)->delete();
 
             $conference->save();
 

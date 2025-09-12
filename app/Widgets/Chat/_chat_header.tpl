@@ -31,24 +31,28 @@
             {/if}
                 </span>
 
-            {if="$conference && $conference->isGroupChat()"}
-                {if="$conference && $conference->info && $conference->info->related"}
-                    {$related = $conference->info->related}
-                    <span
-                        title="{$c->__('page.communities')} • {$related->name}"
-                        onclick="MovimUtils.reload('{$c->route('community', [$related->server, $related->node])}')"
-                        class="control icon bubble active small">
-                        <img src="{$related->getPicture(\Movim\ImageSize::M)}"/>
-                    </span>
-                {/if}
+            {if="$conference  && $conference->info && $conference->info->related"}
+                {$related = $conference->info->related}
+                <span
+                    title="{$c->__('page.communities')} • {$related->name}"
+                    onclick="MovimUtils.reload('{$c->route('community', [$related->server, $related->node])}')"
+                    class="control icon bubble active small">
+                    <img src="{$related->getPicture(\Movim\ImageSize::M)}"/>
+                </span>
+            {/if}
+
+            {if="$c->database('pgsql')"}
+                <span class="control icon active" onclick="ChatActions_ajaxShowSearchDialog('{$jid|echapJS}', true)">
+                    <i class="material-symbols">manage_search</i>
+                </span>
             {/if}
 
             {if="$conference && $conference->mujiCalls->isEmpty() && $conference->isGroupChat()"}
+                <span class="control icon active {if="$c->database('pgsql')"}divided{/if} {if="$incall"}disabled{/if}" onclick="Visio_ajaxGetMujiLobby('{$conference->conference}', true, false);">
+                    <i class="material-symbols">call</i>
+                </span>
                 <span class="control icon active {if="$incall"}disabled{/if}" onclick="Visio_ajaxGetMujiLobby('{$conference->conference}', true, true);">
                     <i class="material-symbols">videocam</i>
-                </span>
-                <span class="control icon active {if="$incall"}disabled{/if}" onclick="Visio_ajaxGetMujiLobby('{$conference->conference}', true, false);">
-                    <i class="material-symbols">call</i>
                 </span>
             {/if}
 
@@ -106,16 +110,6 @@
                             <i class="material-symbols">wifi_tethering</i>
                         {/if}
                     </span>
-
-                    {if="$conference && $conference->info && $conference->info->name"}
-                        <span class="second" title="{$conference->info->name}">
-                            {$conference->info->name}
-                        </span>
-                    {/if}
-
-                    {if="$conference && $conference->info && $conference->isGroupChat() && $conference->subject && $conference->info->name"}
-                        <span class="second">•</span>
-                    {/if}
 
                     {if="$conference && $conference->isGroupChat() && $subject = $conference->subject"}
                         <span class="second" title="{$subject}">
@@ -276,6 +270,12 @@
                 <img src="{if="$roster"}{$roster->getPicture()}{else}{$contact->getPicture()}{/if}">
             </span>
 
+            {if="$c->database('pgsql')"}
+                <span class="control icon active" onclick="ChatActions_ajaxShowSearchDialog('{$jid|echapJS}')">
+                    <i class="material-symbols">manage_search</i>
+                </span>
+            {/if}
+
             {$call = false}
 
             {if="!$incall"}
@@ -283,7 +283,7 @@
                     {loop="$roster->presences"}
                         {if="$value->capability && $value->capability->isJingleAudio() && $value->jid"}
                             {$call = true}
-                            <span title="{$c->__('button.audio_call')}" class="control icon active on_desktop"
+                            <span title="{$c->__('button.audio_call')}" class="control icon active {if="$c->database('pgsql')"}divided{/if} on_desktop"
                                 onclick="Visio_ajaxGetLobby('{$value->jid|echapJS}', true);">
                                 <i class="material-symbols">phone</i>
                             </span>
@@ -314,6 +314,10 @@
                         {$exploded.resource}
                     {else}
                         {$contact->truename}
+                    {/if}
+
+                    {if="$contact->isBlocked()"}
+                        <span class="tag color red">{$c->__('blocked.title')}</span>
                     {/if}
                 </p>
                 <p class="compose first line active" id="{$jid|cleanupId}-state" onclick="ChatActions_ajaxGetContact('{$contact->jid|echapJS}')"></p>

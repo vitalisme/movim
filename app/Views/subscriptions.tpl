@@ -1,7 +1,6 @@
 <?php $this->widget('Search');?>
 <?php $this->widget('Notifications');?>
 <?php $this->widget('SendTo');?>
-<?php $this->widget('Location');?>
 
 <nav>
     <?php $this->widget('Presence');?>
@@ -22,12 +21,13 @@
                 </li>
             </ul>
         </header>
-        <?php if (\App\User::me()->hasPubsub()) { ?>
+        <?php if (me()->hasPubsub()) { ?>
             <?php $this->widget('CommunitySubscriptions'); ?>
         <?php } ?>
     </div>
 </main>
 
-<?php if (\App\User::me()->hasPubsub()) { ?>
+<?php if (me()->hasPubsub()) { ?>
+    <?php $this->widget('Upload');?>
     <?php $this->widget('PublishStories');?>
 <?php } ?>

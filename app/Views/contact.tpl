@@ -5,8 +5,8 @@
 <?php $this->widget('Notifications');?>
 <?php $this->widget('SendTo');?>
 <?php $this->widget('Tabs');?>
-<?php if(\App\User::me()->hasOMEMO()) $this->widget('ChatOmemo');?>
-<?php $this->widget('Location');?>
+<?php $this->widget('Upload');?>
+<?php if(me()->hasOMEMO()) $this->widget('ChatOmemo');?>
 
 <nav>
     <?php $this->widget('Presence');?>
@@ -22,11 +22,12 @@
     </aside>
     <div>
         <?php $this->widget('ContactHeader'); ?>
+        <?php $this->widget('ContactBlogConfig'); ?>
         <?php $this->widget('CommunityPosts'); ?>
     </div>
 </main>
 
-<?php if (\App\User::me()->hasPubsub()) { ?>
+<?php if (me()->hasPubsub()) { ?>
     <?php $this->widget('PublishStories');?>
     <?php $this->widget('StoriesViewer');?>
 <?php } ?>

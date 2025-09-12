@@ -33,7 +33,7 @@ class Muc extends Action
         }
 
         if ($this->_mam == false && $this->_mam2 == false) {
-            \App\User::me()->messages()->where('jidfrom', $this->_to)->delete();
+            me()->messages()->where('jidfrom', $this->_to)->delete();
         }
 
         $this->store(); // Set stanzaId
@@ -93,7 +93,7 @@ class Muc extends Action
         }
 
         if ($this->_mam) {
-            $message = \App\User::me()->messages()
+            $message = me()->messages()
                 ->where('jidfrom', $this->_to)
                 ->whereNull('subject');
 
@@ -104,7 +104,7 @@ class Muc extends Action
 
             $g = new \Moxl\Xec\Action\MAM\Get;
             $g->setTo($this->_to)
-                ->setLimit(300);
+                ->setLimit(500);
 
             if (
                 !empty($message)

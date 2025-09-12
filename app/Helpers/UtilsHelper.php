@@ -10,7 +10,13 @@ use React\Http\Message\Response;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 
-use function React\Async\await;
+/**
+ * Me
+ */
+function me(bool $reload = false)
+{
+    return \App\User::me($reload);
+}
 
 /**
  * Log an error
@@ -192,6 +198,43 @@ function resolveInfos($postCollection)
 
         return $postCollection;
     }
+}
+
+/**
+ * Get required PHP extensions
+ */
+function requiredExtensions(): array
+{
+    $extensions = [
+        'curl',
+        'dom',
+        'imagick',
+        'mbstring',
+        'openssl',
+        'pdo',
+        'simplexml',
+        'xml',
+    ];
+
+    // ext-json is included in PHP since 8.0
+    if (version_compare(PHP_VERSION, '8.0.0') < 0) {
+        array_push($extensions, 'json');
+    }
+
+    if (config('database.driver') == 'mysql') {
+        array_push($extensions, 'mysqlnd');
+        array_push($extensions, 'mysqli');
+        array_push($extensions, 'pdo_mysql');
+    } else {
+        array_push($extensions, 'pdo_pgsql');
+    }
+
+    // Optional extension
+    if (extension_loaded('bcmath')) {
+        array_push($extensions, 'bcmath');
+    }
+
+    return $extensions;
 }
 
 /**
@@ -665,7 +708,7 @@ function requestAsyncURL(string $url, int $timeout = 10, array $headers = []): P
 /**
  * @desc Request the Resolver Worker
  */
-function requestResolverWorker(string $url, int $timeout = 5): PromiseInterface
+function requestResolverWorker(string $url, int $timeout = 30): PromiseInterface
 {
     $connector = new React\Socket\FixedUriConnector(
         'unix://' . RESOLVER_SOCKET,
@@ -906,4 +949,14 @@ function IANAHashToPhp(): array
         'sha-384' => 'sha384',
         'sha-512' => 'sha512',
     ];
+}
+
+/**
+ * @desc Get OMEMO fingerprint from base64
+ */
+function base64ToFingerPrint(string $base64): string
+{
+    $buffer = base64_decode($base64);
+    $hex = unpack('H*', $buffer);
+    return implode(' ', str_split(substr($hex[1], 2), 8));
 }

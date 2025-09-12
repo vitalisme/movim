@@ -65,7 +65,7 @@
         {if="$conference->subject"}
             <li>
                 <span class="primary icon gray">
-                    <i class="material-symbols">short_text</i>
+                    <i class="material-symbols">info_i</i>
                 </span>
                 <div>
                     <p class="line">
@@ -77,7 +77,25 @@
                     </p>
                     <p class="all">
                         {autoescape="off"}
-                            {$conference->subject|addUrls}
+                            {$conference->subject|addUrls|nl2br}
+                        {/autoescape}
+                    </p>
+                </div>
+            </li>
+        {/if}
+
+        {if="$conference->info->description"}
+            <li>
+                <span class="primary icon gray">
+                    <i class="material-symbols">short_text</i>
+                </span>
+                <div>
+                    <p class="line">
+                        {$c->__('information.description')}
+                    </p>
+                    <p class="all">
+                        {autoescape="off"}
+                            {$conference->info->description|addUrls|nl2br}
                         {/autoescape}
                     </p>
                 </div>
@@ -341,6 +359,7 @@
             {else}
                 <div class="placeholder">
                     <i class="material-symbols">remove_circle_outline</i>
+                    <h1>{$c->__('chatrooms.banned')}</h1>
                 </div>
             {/if}
         </div>
@@ -354,14 +373,13 @@
         <div class="tabelem spin" title="{$c->__('general.links')}" id="room_links"></div>
     {/if}
 
-    {if="$hasfingerprints && $c->getUser()->hasOMEMO()"}
+    {if="$c->getUser()->hasOMEMO()"}
         <div class="tabelem spin" title="{$c->__('omemo.fingerprints_title')}" id="room_omemo_fingerprints"></div>
     {/if}
 
     <div id="adhoc_widget_{$room|cleanupId}"
     class="adhoc_widget tabelem"
-    title="{$c->__('adhoc.title')}"
-    data-mobileicon="terminal" >
+    title="{$c->__('adhoc.title')}">
         <div class="placeholder">
             <i class="material-symbols">terminal</i>
             <h1>{$c->__('adhoc.title')}</h1>

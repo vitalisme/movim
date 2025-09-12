@@ -13,6 +13,8 @@ use Moxl\Xec\Payload\Packet;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
 
+use Illuminate\Database\Capsule\Manager as DB;
+
 class Base
 {
     protected array $js = [];     // Contains javascripts
@@ -41,7 +43,7 @@ class Base
         }
 
         $this->setName();
-        $this->user = \App\User::me();
+        $this->user = me();
         $this->load();
         $this->baseUri = BASE_URI;
 
@@ -114,6 +116,11 @@ class Base
     public function route(...$args): ?string
     {
         return \Movim\Route::urlize(...$args);
+    }
+
+    public function database(string $driver): bool
+    {
+        return DB::getDriverName() == $driver;
     }
 
     public function rpc(...$args)

@@ -9,11 +9,12 @@ main:not(.enabled) #chat_widget {
     overflow-y: auto;
 }
 
+#chat_frequent,
 #chat_explore {
     width: 100%;
 }
 
-#chat_widget>div:not(#chat_explore),
+#chat_widget>div:not(#chat_explore):not(#chat_frequent),
 #chat_widget>header {
     max-width: 100%;
     width: 100%;
@@ -38,6 +39,14 @@ main:not(.enabled) #chat_widget {
     overflow-x: hidden;
     height: 100%;
     position: relative;
+}
+
+#chat_widget .contained.history {
+    mask-image: linear-gradient(to bottom, transparent, black 25% 75%, transparent);
+}
+
+#chat_widget ul.list.flex {
+    width: 100%;
 }
 
 #chat_widget .contained:before {
@@ -104,7 +113,8 @@ main:not(.enabled) #chat_widget {
 
 /* Scroll button */
 
-#chat_widget #scroll_down.button.action {
+#chat_widget #scroll_down.button.action,
+#chat_widget #scroll_now.button.action {
     animation: none;
     opacity: 0;
     transform: scale(90%);
@@ -114,7 +124,13 @@ main:not(.enabled) #chat_widget {
     pointer-events: none;
 }
 
-#chat_widget #scroll_down.button.action.show {
+#chat_widget .contained.history ~ .chat_box #scroll_now.button.action {
+    width: 7rem;
+    right: 1.5rem;
+}
+
+#chat_widget .contained.history ~ .chat_box #scroll_now.button.action,
+#chat_widget .contained:not(.history) ~ .chat_box #scroll_now.button.action + #scroll_down.button.action.show {
     transition: transform 0.2s ease-in-out, opacity 0.2s;
     transform: scale(100%);
     opacity: 1;
@@ -180,13 +196,15 @@ main:not(.enabled) #chat_widget {
 #chat_widget .chat_box form textarea[data-encryptedstate="disabled"]~span.control.icon.encrypted_disabled,
 #chat_widget .chat_box form textarea[data-encryptedstate="build"]~span.control.icon.encrypted_loading {
     display: inline-block;
-    font-size: 3rem;
+    font-size: 2.75rem;
     line-height: 6rem;
     height: 6rem;
     position: absolute;
     right: 0;
     top: 0;
-    padding: 0 1rem;
+    padding: 0 1.5rem;
+    z-index: 1;
+    color: rgba(var(--movim-font), 0.68);
 }
 
 #chat_widget .chat_box li.main > span.primary,
@@ -272,6 +290,7 @@ main:not(.enabled) #chat_widget {
 }
 
 #chat_widget .chat_box.compose>ul.list>li>ul.list.actions,
+#chat_widget .chat_box.compose>ul.list>li #dictaphone_toggle,
 #chat_widget .chat_box:not(.compose)>ul.list>li>.control.attach~.control.send:not(.emojis),
 #chat_widget .chat_box.compose>ul.list>li>.control.attach~.control:not(.send):not(.emojis),
 #chat_widget .chat_box.compose>ul.list>li>.control:not(.send):not(.emojis) {
@@ -634,6 +653,7 @@ ul.list li > div.bubble.file ul.card + p:empty:before {
 ul.list li > div.bubble.file div.file {
     margin-bottom: 3rem;
     border-radius: 0.75rem;
+    position: relative;
 }
 
 li:not(.oppose) .bubble.file span.resource+div.file {
@@ -718,7 +738,7 @@ ul.list li > div.bubble.file div.file a span.size:before {
 }
 
 #chat_widget .bubble.file .message div.file:before {
-    right: 8.5rem;
+    right: 1.5rem;
 }
 
 #chat_widget .bubble.file[data-thumbash] {

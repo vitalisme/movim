@@ -13,6 +13,7 @@ use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Support\Collection;
 use Movim\XMPPUri;
 use Moxl\Xec\Action\BOB\Request;
+use Moxl\Xec\Action\Pubsub\GetItem;
 
 class Message extends Model
 {
@@ -37,6 +38,27 @@ class Message extends Model
 
     public static $inlinePlaceholder = 'inline-img:';
 
+    public const MESSAGE_TYPE = [
+        'chat',
+        'headline',
+        'invitation',
+        'jingle_end',
+        'jingle_finish',
+        'jingle_incoming',
+        'jingle_outgoing',
+        'jingle_reject',
+        'jingle_retract',
+    ];
+    public const MESSAGE_TYPE_MUC = [
+        'groupchat',
+        'muc_admin',
+        'muc_member',
+        'muc_outcast',
+        'muc_owner',
+        'muji_propose',
+        'muji_retract',
+    ];
+
     public static function boot()
     {
         parent::boot();
@@ -44,7 +66,7 @@ class Message extends Model
         static::saved(function (Message $message) {
             if ($message->messageFiles != null && $message->messageFiles->isNotEmpty()) {
                 $mid = Message::where('id', $message->id)
-                    ->where('user_id', \App\User::me()->id)
+                    ->where('user_id', me()->id)
                     ->where('jidfrom', $message->jidfrom)
                     ->first()
                     ->mid;
@@ -56,6 +78,8 @@ class Message extends Model
                     $file->save();
                 });
             }
+
+            $message->resolvePost();
         });
     }
 
@@ -92,18 +116,18 @@ class Message extends Model
     public function scopeJid($query, string $jid)
     {
         $jidFromToMessages = DB::table('messages')
-            ->where('user_id', \App\User::me()->id)
+            ->where('user_id', me()->id)
             ->where('jidfrom', $jid)
             ->unionAll(
                 DB::table('messages')
-                    ->where('user_id', \App\User::me()->id)
+                    ->where('user_id', me()->id)
                     ->where('jidto', $jid)
             );
 
         return $query->select('*')->from(
             $jidFromToMessages,
             'messages'
-        )->where('user_id', \App\User::me()->id);
+        )->where('user_id', me()->id);
     }
 
     public function reactions()
@@ -140,7 +164,7 @@ class Message extends Model
             : null;
     }
 
-    public function getOmemoheaderAttribute()
+    public function getOmemoheaderAttribute(): ?array
     {
         return array_key_exists('omemoheader', $this->attributes) && $this->attributes['omemoheader'] !== null
             ? unserialize($this->attributes['omemoheader'])
@@ -152,6 +176,13 @@ class Message extends Model
         return \unechap($this->attributes['jidfrom']);
     }
 
+    public function getJidAttribute()
+    {
+        return $this->attributes['jidfrom'] == me()->id
+            ? \unechap($this->attributes['jidto'])
+            : \unechap($this->attributes['jidfrom']);
+    }
+
     public static function findByStanza(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null): Message
     {
         $jidfrom = baseJid((string)$stanza->attributes()->from);
@@ -161,24 +192,24 @@ class Message extends Model
             && $stanza->attributes()->xmlns == 'urn:xmpp:mam:2'
         ) {
             return self::firstOrNew([
-                'user_id' => \App\User::me()->id,
+                'user_id' => me()->id,
                 'stanzaid' => (string)$stanza->attributes()->id,
                 'jidfrom' => baseJid((string)$stanza->forwarded->message->attributes()->from)
             ]);
         } elseif (
             $stanza->{'stanza-id'} && $stanza->{'stanza-id'}->attributes()->id
             && ($stanza->{'stanza-id'}->attributes()->by == $jidfrom
-                || $stanza->{'stanza-id'}->attributes()->by == \App\User::me()->id
+                || $stanza->{'stanza-id'}->attributes()->by == me()->id
             )
         ) {
             return self::firstOrNew([
-                'user_id' => \App\User::me()->id,
+                'user_id' => me()->id,
                 'stanzaid' => (string)$stanza->{'stanza-id'}->attributes()->id,
                 'jidfrom' => $jidfrom
             ]);
         } else {
             $message = new Message;
-            $message->user_id = \App\User::me()->id;
+            $message->user_id = me()->id;
             $message->id = 'm_' . generateUUID();
             $message->jidfrom = $jidfrom;
             return $message;
@@ -191,23 +222,23 @@ class Message extends Model
 
         if ($muc) {
             // Resolve the current presence
-            $presence = \App\User::me()->session->presences()
+            $presence = me()->session->presences()
                 ->where('jid', $to)
                 ->where('muc', true)
-                ->where('mucjid', \App\User::me()->id)
+                ->where('mucjid', me()->id)
                 ->first();
 
             if ($presence) {
-                $m = \App\User::me()->messages()
+                $m = me()->messages()
                     ->where('type', 'groupchat')
                     ->where('jidfrom', $to)
-                    ->where('jidto', \App\User::me()->id)
+                    ->where('jidto', me()->id)
                     ->where('resource', $presence->resource)
                     ->orderBy('published', 'desc')
                     ->first();
             }
         } else {
-            $m = \App\User::me()->messages()
+            $m = me()->messages()
                 ->where('jidto', $to)
                 ->orderBy('published', 'desc')
                 ->first();
@@ -225,7 +256,7 @@ class Message extends Model
 
     public static function eventMessageFactory(string $type, string $from, string $thread): Message
     {
-        $userid = \App\User::me()->id;
+        $userid = me()->id;
         $message = new \App\Message;
         $message->user_id = $userid;
         $message->id = 'm_' . generateUUID();
@@ -258,7 +289,7 @@ class Message extends Model
         $jidTo = explodeJid((string)$stanza->attributes()->to);
         $jidFrom = explodeJid((string)$stanza->attributes()->from);
 
-        $this->user_id    = \App\User::me()->id;
+        $this->user_id    = me()->id;
 
         if (!$this->id) {
             $this->id = 'm_' . generateUUID();
@@ -313,7 +344,7 @@ class Message extends Model
             && $stanza->{'stanza-id'}->attributes()->id
             && (string)$stanza->{'stanza-id'}->attributes()->xmlns == 'urn:xmpp:sid:0'
             && ($stanza->{'stanza-id'}->attributes()->by == $this->jidfrom
-                || $stanza->{'stanza-id'}->attributes()->by == \App\User::me()->id
+                || $stanza->{'stanza-id'}->attributes()->by == me()->id
             )
         ) {
             if ($this->isMuc()) {
@@ -544,11 +575,11 @@ class Message extends Model
                             $messageFile->thumbnail_url = (string)$thumbnailAttributes->uri;
                         }
 
-                        if (substr((string)$thumbnailAttributes->uri, 0, 21) == 'data:image/thumbhash,') {
+                        if (substr((string)$thumbnailAttributes->uri, 0, 28) == 'data:image/thumbhash;base64,') {
                             $messageFile->thumbnail_width = (int)$thumbnailAttributes->width;
                             $messageFile->thumbnail_height = (int)$thumbnailAttributes->height;
                             $messageFile->thumbnail_type = (string)$thumbnailAttributes->{'media-type'};
-                            $messageFile->thumbnail_url = substr((string)$thumbnailAttributes->uri, 21);
+                            $messageFile->thumbnail_url = substr((string)$thumbnailAttributes->uri, 28);
                         }
                     }
 
@@ -568,11 +599,7 @@ class Message extends Model
                         $this->messageFiles->push($messageFile);
                     }
                 } else {
-                    $xmppUri = new XMPPUri((string)$stanza->reference->attributes()->uri);
-
-                    if ($post = $xmppUri->getPost()) {
-                        $this->postid = $post->id;
-                    }
+                    $this->posturi = (string)$stanza->reference->attributes()->uri;
                 }
             }
 
@@ -617,6 +644,27 @@ class Message extends Model
         }
 
         return $this;
+    }
+
+    /**
+     * @desc Resolve the Post from its URI, require a saved message
+     */
+    public function resolvePost()
+    {
+        if (!$this->posturi || !empty($this->postid)) return;
+
+        $xmppUri = new XMPPUri($this->posturi);
+
+        if ($post = $xmppUri->getPost()) {
+            $this->postid = $post->id;
+        } elseif($xmppUri->getServer() && $xmppUri->getNode() && $xmppUri->getNodeItemId()) {
+            $getItem = new GetItem;
+            $getItem->setTo($xmppUri->getServer())
+                ->setNode($xmppUri->getNode())
+                ->setId($xmppUri->getNodeItemId())
+                ->setMessagemid($this->mid)
+                ->request();
+        }
     }
 
     /**

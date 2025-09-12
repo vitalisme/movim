@@ -1,6 +1,8 @@
+<li id="publish_blog_presence"></li>
+
 <li>
     <span class="primary privacy"
-    title="{$c->__('post.public_title')}">
+    title="{$c->__('publish.web_title')}">
         <form>
             <div>
                 <div class="checkbox">
@@ -20,9 +22,9 @@
         </form>
     </span>
     <div>
-        <p>{$c->__('post.public_title')}</p>
-        <p>{$c->__('post.public_text')}</p>
-        <span class="supporting line" id="publishopenlinkpreview"></span>
+        <p>{$c->__('publish.web_title')}</p>
+        <p>{$c->__('publish.web_text')}</p>
+        <span class="supporting line" id="publish_preview_url"></span>
     </div>
 </li>
 

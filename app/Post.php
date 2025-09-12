@@ -7,10 +7,10 @@ use Respect\Validation\Validator;
 use Awobaz\Compoships\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Capsule\Manager as DB;
+use Illuminate\Support\Collection;
 use Movim\Widget\Wrapper;
 use Moxl\Xec\Payload\Packet;
 use React\Promise\Promise;
-use React\Promise\PromiseInterface;
 use SimpleXMLElement;
 
 class Post extends Model
@@ -23,13 +23,7 @@ class Post extends Model
         'likes',
         'comments',
         'contact',
-        'openlink',
-        'embed',
         'links',
-        'files',
-        'pictures',
-        'picture',
-        'attachment',
         'userAffiliation'
     ];
     public $withCount = ['userViews'];
@@ -74,7 +68,7 @@ class Post extends Model
     public function userAffiliation()
     {
         return $this->hasOne('App\Affiliation', ['server', 'node'], ['server', 'node'])
-            ->where('jid', \App\User::me()->id);
+            ->where('jid', me()->id);
     }
 
     public function userViews()
@@ -84,7 +78,7 @@ class Post extends Model
 
     public function myViews()
     {
-        return $this->userViews()->where('user_id', \App\User::me()->id);
+        return $this->userViews()->where('user_id', me()->id);
     }
 
     public function likes()
@@ -97,18 +91,6 @@ class Post extends Model
                     ->whereNotNull('aid')
                     ->groupByRaw('aid, parent_id');
             });
-    }
-
-    public function openlink()
-    {
-        return $this->hasOne('App\Attachment')
-            ->where('category', 'open');
-    }
-
-    public function embed()
-    {
-        return $this->hasOne('App\Attachment')
-            ->where('category', 'embed');
     }
 
     public function links()
@@ -124,35 +106,58 @@ class Post extends Model
             });
     }
 
-    public function files()
-    {
-        return $this->hasMany('App\Attachment')
-            ->where('category', 'file');
-    }
-
-    public function pictures()
-    {
-        return $this->hasMany('App\Attachment')
-            ->where('category', 'picture')
-            ->where('type', '!=', 'content');
-    }
-
-    public function picture()
-    {
-        return $this->hasOne('App\Attachment')
-            ->where('category', 'picture');
-    }
-
-    public function attachment()
-    {
-        return $this->hasOne('App\Attachment')
-            ->whereIn('rel', ['enclosure', 'related'])
-            ->orderBy('rel', 'desc'); // related first
-    }
+    /**
+     * Attachements
+     */
 
     public function attachments()
     {
         return $this->hasMany('App\Attachment');
+    }
+
+    public function resolveAttachments(): Collection
+    {
+        return $this->relations['attachments'] ?? $this->attachments()->get();
+    }
+
+    public function getOpenlinkAttribute()
+    {
+        return $this->resolveAttachments()->firstWhere('category', 'open');
+    }
+
+    public function getEmbedsAttribute()
+    {
+        return $this->resolveAttachments()->where('category', 'embed');
+    }
+
+    public function getEmbedAttribute()
+    {
+        return $this->resolveAttachments()->firstWhere('category', 'embed');
+    }
+
+    public function getFilesAttribute()
+    {
+        return $this->resolveAttachments()->where('category', 'file');
+    }
+
+    public function getPicturesAttribute()
+    {
+        return $this->resolveAttachments()
+            ->where('category', 'picture')
+            ->where('type', '!=', 'content');
+    }
+
+    public function getPictureAttribute()
+    {
+        return $this->resolveAttachments()->firstWhere('category', 'picture');
+    }
+
+    public function getAttachmentAttribute()
+    {
+        return $this->resolveAttachments()
+            ->whereIn('rel', ['enclosure', 'related'])
+            ->orderBy('rel', 'desc')
+            ->first(); // related first
     }
 
     public function save(array $options = [])
@@ -179,7 +184,6 @@ class Post extends Model
 
                 $this->tags()->sync($this->tags);
             }
-
         } catch (\Exception $e) {
             /*
              * When an article is received by two accounts simultaenously
@@ -215,7 +219,7 @@ class Post extends Model
 
         if ($configuration->restrictsuggestions) {
             $query->whereIn('id', function ($query) {
-                $host = \App\User::me()->session->host;
+                $host = me()->session->host;
                 $query->select('id')
                     ->from('posts')
                     ->where('server', 'like', '%.' . $host)
@@ -224,11 +228,20 @@ class Post extends Model
         }
     }
 
+    public function scopeRestrictReported($query)
+    {
+        $query->whereNotIn('aid', function ($query) {
+            $query->select('reported_id')
+                ->from('reported_user')
+                ->where('user_id', me()->id);
+        });
+    }
+
     public function scopeRestrictNSFW($query)
     {
         $query->where('nsfw', false);
 
-        if (\App\User::me()->nsfw) {
+        if (me()->nsfw) {
             $query->orWhere('nsfw', true);
         }
     }
@@ -272,7 +285,7 @@ class Post extends Model
         return $query->unionAll(
             DB::table('posts')
                 ->where('node', $node)
-                ->where('server', \App\User::me()->id)
+                ->where('server', me()->id)
         );
     }
 
@@ -288,12 +301,12 @@ class Post extends Model
                 ->whereIn('server', function ($query) {
                     $query->select('server')
                         ->from('subscriptions')
-                        ->where('jid', \App\User::me()->id);
+                        ->where('jid', me()->id);
                 })
                 ->whereIn('node', function ($query) {
                     $query->select('node')
                         ->from('subscriptions')
-                        ->where('jid', \App\User::me()->id);
+                        ->where('jid', me()->id);
                 })
         );
     }
@@ -306,16 +319,16 @@ class Post extends Model
     public function scopeMyStories($query, ?int $id = null)
     {
         $query = $query->whereIn('id', function ($query) {
-                $filters = DB::table('posts')->where('id', -1);
+            $filters = DB::table('posts')->where('id', -1);
 
-                $filters = \App\Post::withMineScope($filters, Post::STORIES_NODE);
-                $filters = \App\Post::withContactsScope($filters, Post::STORIES_NODE);
+            $filters = \App\Post::withMineScope($filters, Post::STORIES_NODE);
+            $filters = \App\Post::withContactsScope($filters, Post::STORIES_NODE);
 
-                $query->select('id')->from(
-                    $filters,
-                    'posts'
-                );
-            })
+            $query->select('id')->from(
+                $filters,
+                'posts'
+            );
+        })
             ->where('published', '>', Carbon::now()->subDay())
             ->orderBy('published', 'desc');
 
@@ -383,7 +396,7 @@ class Post extends Model
                     $d = htmlspecialchars_decode((string)$c);
 
                     $dom = new \DOMDocument('1.0', 'utf-8');
-                    $dom->loadHTML('<div>' .$d . '</div>', LIBXML_NOERROR);
+                    $dom->loadHTML('<div>' . $d . '</div>', LIBXML_NOERROR);
 
                     return (string)$dom->saveHTML($dom->documentElement->lastChild->lastChild);
                     break;
@@ -676,18 +689,30 @@ class Post extends Model
 
             if (in_array($att->rel, ['enclosure', 'related', 'alternate'])) {
                 $atte = new Attachment;
-                $atte->rel = $enc['rel'];
+                $atte->rel = $att->rel;
                 $atte->category = 'embed';
 
+                // Youtube
                 if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $enc['href'], $match)) {
                     $atte->href = 'https://www.youtube.com/embed/' . $match[1];
                     $this->attachments[] = $atte;
+                    // RedGif
                 } elseif (preg_match('/(?:https:\/\/)?(?:www.)?redgifs.com\/watch\/([a-zA-Z]+)$/', $enc['href'], $match)) {
                     $atte->href = 'https://www.redgifs.com/ifr/' . $match[1];
                     $this->attachments[] = $atte;
                     $this->resolveUrl($enc['href']);
-                } elseif (in_array(parse_url($enc['href'], PHP_URL_HOST), ['old.reddit.com', 'reddit.com', 'www.reddit.com'])
-                    && substr(parse_url($enc['href'], PHP_URL_PATH), 0, 8) == '/gallery') {
+                    // PeerTube
+                } elseif (
+                    preg_match('/https:\/\/?(.*)\/w\/(\w{22})/', $enc['href'], $match)
+                    || preg_match('/https:\/\/?(.*)\/videos\/watch\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/', $enc['href'], $match)
+                ) {
+                    $atte->href = 'https://' . $match[1] . '/videos/embed/' . $match[2];
+                    $this->attachments[] = $atte;
+                    // Reddit
+                } elseif (
+                    in_array(parse_url($enc['href'], PHP_URL_HOST), ['old.reddit.com', 'reddit.com', 'www.reddit.com'])
+                    && substr(parse_url($enc['href'], PHP_URL_PATH), 0, 8) == '/gallery'
+                ) {
                     $this->resolveUrl($enc['href']);
                 }
             }
@@ -779,9 +804,20 @@ class Post extends Model
         return 'urn:uuid:' . generateUUID(hash('sha256', $this->server . $this->node . $this->nodeid, true));
     }
 
-    public function getRef()
+    public function getRef(): string
     {
         return 'xmpp:' . $this->server . '?;node=' . $this->node . ';item=' . $this->nodeid;
+    }
+
+    public function getLink(?bool $public = false): string
+    {
+        if ($public) {
+            return $this->isMicroblog()
+                ? \Movim\Route::urlize('blog', [$this->server, $this->nodeid])
+                : \Movim\Route::urlize('community', [$this->server, $this->node, $this->nodeid]);
+        }
+
+        return \Movim\Route::urlize('post', [$this->server, $this->node, $this->nodeid]);
     }
 
     // Works only for the microblog posts
@@ -793,11 +829,11 @@ class Post extends Model
     public function isMine($force = false): bool
     {
         if ($force) {
-            return ($this->aid == \App\User::me()->id);
+            return ($this->aid == me()->id);
         }
 
-        return ($this->aid == \App\User::me()->id
-            || $this->server == \App\User::me()->id);
+        return ($this->aid == me()->id
+            || $this->server == me()->id);
     }
 
     public function isMicroblog(): bool
@@ -888,7 +924,7 @@ class Post extends Model
 
     public function isLiked()
     {
-        return ($this->likes()->where('aid', \App\User::me()->id)->count() > 0);
+        return ($this->likes()->where('aid', me()->id)->count() > 0);
     }
 
     public function isRecycled()

@@ -32,6 +32,9 @@
     </section>
 </div>
 <div class="chat_box {if="isset($conference) && $conference->presence && $conference->presence->mucrole == 'visitor'"}disabled{/if}">
+    <a id="scroll_now" class="button action color small" onclick="Chat_ajaxClearAndGetMessages('{$jid}', {if="$muc"}true{/if})">
+        <i class="material-symbols">clock_arrow_down</i>
+    </a>
     <a id="scroll_down" class="button action color transparent small" onclick="Chat.scrollTotally()">
         <i class="material-symbols">expand_more</i>
     </a>
@@ -48,6 +51,7 @@
             </span>
             {if="$c->getUser()->hasUpload()"}
                 <span class="emojis control icon gray active"
+                        id="dictaphone_toggle"
                         title="{$c->__('dictaphone.name')}"
                         onclick="Dictaphone.toggle()">
                     <i class="material-symbols">mic</i>
@@ -114,15 +118,15 @@
                         {if="isset($conference) && $conference->presence && $conference->presence->mucrole == 'visitor'"}disabled{/if}
                     ></textarea>
                     <span class="control icon encrypted" title="{$c->__('omemo.encrypted')}"
-                        onclick="ChatOmemo.disableContactState('{$jid}')">
-                        <i class="material-symbols">lock</i>
+                        onclick="ChatOmemo.disableContactState('{$jid}', {if="$muc"}true{else}false{/if})">
+                        <i class="material-symbols fill">lock</i>
                     </span>
                     <span class="control icon encrypted_disabled" title="{$c->__('omemo.encrypted_disabled')}"
                         onclick="ChatOmemo.enableContactState('{$jid}', {if="$muc"}true{else}false{/if})">
                         <i class="material-symbols">no_encryption</i>
                     </span>
                     <span class="control icon encrypted_loading" title="{$c->__('omemo.encrypted_loading')}"
-                        onclick="ChatOmemo.disableContactState('{$jid}');">
+                        onclick="ChatOmemo.disableContactState('{$jid}', {if="$muc"}true{else}false{/if})">
                         <i class="material-symbols">lock_clock</i>
                     </span>
                 </div>

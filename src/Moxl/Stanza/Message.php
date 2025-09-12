@@ -210,7 +210,7 @@ class Message
                     $thumbnail->setAttribute('media-type', $file->thumbnail_type);
 
                     if ($file->thumbnail_type == 'image/thumbhash') {
-                        $thumbnail->setAttribute('uri', 'data:image/thumbhash,' . $file->thumbnail_url);
+                        $thumbnail->setAttribute('uri', 'data:image/thumbhash;base64,' . $file->thumbnail_url);
                     } else {
                         $thumbnail->setAttribute('uri', $file->thumbnail_url);
                     }
@@ -396,18 +396,18 @@ class Message
         self::maker($to, type: 'chat', chatstates: 'paused');
     }
 
-    public static function retract(string $to, string $originId)
+    public static function retract(string $to, string $id, string $type)
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $root = $dom->createElementNS('jabber:client', 'message');
         $dom->appendChild($root);
         $root->setAttribute('to', str_replace(' ', '\40', $to));
-        $root->setAttribute('type', 'chat');
+        $root->setAttribute('type', $type);
         $root->setAttribute('id', generateUUID());
 
         $retract = $dom->createElement('retract');
         $retract->setAttribute('xmlns', 'urn:xmpp:message-retract:1');
-        $retract->setAttribute('id', $originId);
+        $retract->setAttribute('id', $id);
         $root->appendChild($retract);
 
         // Hints

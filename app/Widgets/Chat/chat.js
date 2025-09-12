@@ -4,8 +4,6 @@ var Chat = {
     date: null,
     separator: null,
 
-    // Date time of the oldest message displayed
-    currentDateTime: null,
     edit: false,
 
     // Scroll
@@ -46,6 +44,18 @@ var Chat = {
     // Keep track of replaced messages hash when loading history or refreshing
     replacedHash: [],
 
+    init: function (date, separator, config) {
+        var div = document.createElement('div');
+
+        div.innerHTML = date;
+        Chat.date = div.firstChild.cloneNode(true);
+        div.innerHTML = separator;
+        Chat.separator = div.firstChild.cloneNode(true);
+
+        Chat.pagination = config['pagination'];
+        Chat.delivery_error = config['delivery_error'];
+        Chat.action_impossible_encrypted_error = config['action_impossible_encrypted_error'];
+    },
     autocomplete: function (event, jid) {
         RoomsUtils_ajaxMucUsersAutocomplete(jid);
     },
@@ -155,10 +165,11 @@ var Chat = {
     getHistory: function (tryMam) {
         var textarea = Chat.getTextarea();
 
+        let firstMessage = Chat.getDiscussion().querySelector('.message');
         if (textarea) {
             Chat_ajaxGetHistory(
                 textarea.dataset.jid,
-                Chat.currentDateTime,
+                firstMessage ? firstMessage.dataset.published : null,
                 Boolean(textarea.dataset.muc),
                 true,
                 tryMam);
@@ -214,29 +225,26 @@ var Chat = {
                     Chat_ajaxClearReply();
                 };
 
-                if (textarea.dataset.encryptedstate == 'build') {
+                if (Chat.getOmemoState() == 'build') {
                     var store = new ChatOmemoStorage();
                     store.getLocalRegistrationId().then(deviceId => {
                         if (deviceId) {
                             if (isMuc) {
-                                var bundlesIds = {};
-                                Chat.groupChatMembers.forEach(member => {
-                                    let bundles = store.getSessionsIds(member);
-                                    if (bundles.length > 0) {
-                                        bundlesIds[member] = bundles;
-                                    }
-                                });
-
-                                ChatOmemo_ajaxGetMissingRoomSessions(jid, bundlesIds);
-                            } else {
-                                ChatOmemo_ajaxGetMissingSessions(jid, store.getSessionsIds(jid));
+                                Chat.checkOMEMOState(jid, isMuc);
+                            } else if (store.getSessionsIds(jid).length == 0) {
+                                ChatOmemo_ajaxGetDevicesList(jid);
                             }
                         } else {
                             Chat.disableSending();
-                            ChatOmemo.generateBundle();
+                            ChatOmemo.refreshBundle(store.getOwnSessionsIds());
                         }
                     });
-                } else if (textarea.dataset.encryptedstate == 'yes') {
+                } else if (Chat.getOmemoState() == 'yes') {
+                    if (!text) {
+                        Chat.disableSending();
+                        return;
+                    }
+
                     // Try to encrypt the message
                     let omemo = ChatOmemo.encrypt(jid, text, isMuc);
                     if (omemo) {
@@ -274,43 +282,24 @@ var Chat = {
         Chat.groupChatMembers = members;
     },
 
-    setBundlesIds: function (jid, bundlesIds) {
+    checkOMEMOState: function (jid, muc) {
         var store = new ChatOmemoStorage();
 
-        let build = false;
-        for (const jid in bundlesIds) {
-            let storedSessionsIds = store.getSessionsIds(jid);
-
-            // We need to build new sessions
-            if (!bundlesIds[jid].every(bundleId => storedSessionsIds.includes(bundleId.toString()))) {
-                build = true;
-                break;
-            }
-
-            // We need to close a few sessions
-            if (storedSessionsIds.length > bundlesIds[jid].length) {
-                storedSessionsIds.forEach(storedSessionsId => {
-                    if (!bundlesIds[jid].includes(parseInt(storedSessionsId))) {
-                        var address = new libsignal.SignalProtocolAddress(jid, storedSessionsId);
-                        store.removeSession(address);
-                    }
-                });
-            }
-        }
+        let build = muc
+            ? Chat.groupChatMembers.some(
+                member => !store.isJidResolved(member)
+            )
+            : !store.isJidResolved(jid);
 
         ChatOmemo.getContactState(jid).then(enabled => {
             let state = 'no';
 
             if (enabled) {
-                if (Object.keys(bundlesIds).length > 0) {
-                    state = build
-                        ? 'build'
-                        : 'yes';
-                }
+                state = build
+                    ? 'build'
+                    : 'yes';
             } else {
-                if (Object.keys(bundlesIds).length > 0) {
-                    state = 'disabled';
-                }
+                state = 'disabled';
             }
 
             Chat.setOmemoState(state);
@@ -321,6 +310,13 @@ var Chat = {
         let textarea = Chat.getTextarea();
         if (textarea) {
             textarea.dataset.encryptedstate = state;
+        }
+    },
+
+    getOmemoState: function () {
+        let textarea = Chat.getTextarea();
+        if (textarea) {
+            return textarea.dataset.encryptedstate;
         }
     },
 
@@ -652,17 +648,6 @@ var Chat = {
         Chat.delivery_error = delivery_error;
         Chat.action_impossible_encrypted_error = action_impossible_encrypted_error;
     },
-    resetCurrentDateTime: function () {
-        Chat.currentDateTime = null;
-    },
-    setGeneralElements(date, separator) {
-        var div = document.createElement('div');
-
-        div.innerHTML = date;
-        Chat.date = div.firstChild.cloneNode(true);
-        div.innerHTML = separator;
-        Chat.separator = div.firstChild.cloneNode(true);
-    },
     setSpecificElements: function (left, right) {
         var div = document.createElement('div');
 
@@ -676,8 +661,7 @@ var Chat = {
         if (discussion == null) return;
 
         discussion.onscroll = function () {
-            if (this.scrollTop < 1
-                && Chat.currentDateTime) {
+            if (this.scrollTop < 1) {
                 Chat.getHistory(true);
             }
 
@@ -693,7 +677,13 @@ var Chat = {
         Chat.lastHeight = discussion.scrollHeight;
         Chat.lastScroll = discussion.scrollTop + discussion.clientHeight;
 
-        Chat.scrollToggleButton();
+        var button = document.querySelector('#chat_widget #scroll_down.button.action');
+
+        if (Chat.isScrolled()) {
+            button.classList.remove('show');
+        } else {
+            button.classList.add('show');
+        }
     },
     isScrolled: function () {
         return Chat.lastHeight - 5 <= Chat.lastScroll;
@@ -740,18 +730,6 @@ var Chat = {
             Chat.setScroll();
         }
     },
-    scrollToggleButton: function () {
-        var discussion = Chat.getDiscussion();
-        if (discussion == null) return;
-
-        var button = document.querySelector('#chat_widget #scroll_down.button.action');
-
-        if (Chat.isScrolled()) {
-            button.classList.remove('show');
-        } else {
-            button.classList.add('show');
-        }
-    },
     removeSeparator: function () {
         var separator = Chat.getDiscussion().querySelector('li.separator');
         if (separator) separator.remove();
@@ -780,23 +758,31 @@ var Chat = {
                     parentMsg = document.getElementById('id' + this.dataset.parentReplaceId)
                 }
                 if (parentMsg) {
-                    scrollToLi = parentMsg.parentNode.parentNode;
-
-                    parentMsg.parentNode.classList.add('scroll_blink');
-
-                    setTimeout(() => {
-                        parentMsg.parentNode.classList.remove('scroll_blink');
-                    }, 1000);
-
-                    document.querySelector('#chat_widget .contained').scrollTo({
-                        top: scrollToLi.offsetTop - 160,
-                        left: 0
-                    });
+                    Chat.scrollAndBlinkMessage(parentMsg)
                 }
             }
 
             i++;
         }
+    },
+    scrollAndBlinkMessage: function (msg) {
+        scrollToLi = msg.parentNode.parentNode;
+
+        msg.parentNode.classList.add('scroll_blink');
+
+        setTimeout(() => {
+            msg.parentNode.classList.remove('scroll_blink');
+        }, 1000);
+
+        document.querySelector('#chat_widget .contained').scrollTo({
+            top: scrollToLi.offsetTop - 160,
+            left: 0
+        });
+    },
+    scrollAndBlinkMessageMid: function (mid) {
+        setTimeout(() => {
+            Chat.scrollAndBlinkMessage(document.querySelector('div[data-mid="' + mid + '"'));
+        }, 500)
     },
     setVideoObserverBehaviour: function () {
         document.querySelectorAll('.file video').forEach(video => {
@@ -942,21 +928,17 @@ var Chat = {
                 /**
                  * We might have old messages reacted pushed by the server
                  */
-                if (Chat.currentDateTime
-                    && Chat.currentDateTime > messageDateTime
+                /*if (Chat.oldestMessageDateTime
+                    && Chat.oldestMessageDateTime > messageDateTime
                     && !prepend) {
                     return;
-                }
+                }*/
 
                 if (prepend === undefined || prepend === false) {
                     Chat.appendDate(date, prepend);
                 }
 
                 for (speakertime in page[date]) {
-                    if (Chat.currentDateTime == null) {
-                        Chat.currentDateTime = page[date][speakertime].published;
-                    }
-
                     Chat.appendMessage(speakertime, page[date][speakertime], prepend);
                 }
 
@@ -1044,11 +1026,9 @@ var Chat = {
         } else {
             if (data.user_id == data.jidfrom || data.mine) {
                 bubble = Chat.right.cloneNode(true);
-                if (data.mine) {
-                    id = data.jidfrom;
-                } else {
-                    id = data.jidto;
-                }
+                id = (data.mine)
+                    ? data.jidfrom
+                    : data.jidto;
             } else {
                 bubble = Chat.left.cloneNode(true);
                 id = data.jidfrom;
@@ -1121,7 +1101,7 @@ var Chat = {
         }
 
         // OMEMO handling
-        if (data.omemoheader && data.encrypted && OMEMO_ENABLED) {
+        if (data.omemoheader && data.encrypted && !data.retracted && OMEMO_ENABLED) {
             p.innerHTML = data.omemoheader.payload.substring(0, data.omemoheader.payload.length / 2);
             ChatOmemo.decrypt(data).then(plaintext => {
                 let refreshP = document.querySelector('#id' + data.id + ' p.encrypted');
@@ -1189,7 +1169,7 @@ var Chat = {
             msg.appendChild(Chat.getCardHtml(data.card, data.story));
         }
 
-        msg.setAttribute('title', data.published);
+        msg.dataset.published = data.published;
 
         msg.appendChild(p);
         msg.appendChild(info);
@@ -1282,17 +1262,10 @@ var Chat = {
             }
         }
 
-        if (prepend) {
-            if (new Date(Chat.currentDateTime) > new Date(data.published)) {
-                Chat.currentDateTime = data.published;
-            }
-
-            // We prepend
-            if (!mergeMsg) {
+        if (!mergeMsg) {
+            if (prepend) {
                 MovimTpl.prepend('#' + id, bubble.outerHTML);
-            }
-        } else {
-            if (!mergeMsg) {
+            } else {
                 MovimTpl.append('#' + id, bubble.outerHTML);
             }
         }
@@ -1616,9 +1589,10 @@ var Chat = {
         if (!chat) return;
 
         chat.addEventListener('touchstart', function (event) {
+            chat.classList.remove('moving');
+
             Chat.startX = event.targetTouches[0].pageX;
             Chat.startY = event.targetTouches[0].pageY;
-            chat.classList.remove('moving');
         }, true);
 
         chat.addEventListener('touchmove', function (event) {
@@ -1636,19 +1610,19 @@ var Chat = {
                 }
 
                 if (Chat.slideAuthorized) {
-                    chat.style.transform = 'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, '
-                        + (Chat.translateX - delay)
-                        + ', 0, 0, 1)';
+                    chat.style.transform = 'translateX(' + (Chat.translateX - delay) + 'px)';
                 }
             }
         }, true);
 
         chat.addEventListener('touchend', function (event) {
             chat.classList.add('moving');
+
             if (Chat.translateX > (clientWidth / 4) && Chat.slideAuthorized) {
                 MovimTpl.hidePanel();
                 Chat.get(null, true);
             }
+
             chat.style.transform = '';
             Chat.slideAuthorized = false;
             Chat.startX = Chat.translateX = Chat.startY = Chat.translateY = 0;
@@ -1664,23 +1638,37 @@ var Chat = {
         }
 
         return url.protocol === "http:" || url.protocol === "https:";
-    }
+    },
+    getNewerMessages: function () {
+        var jid = MovimUtils.urlParts().params[0];
+        let lastMessage = Chat.getDiscussion().querySelector('li:last-child .bubble:last-child .message:last-child');
+
+        if (jid) {
+            Chat_ajaxGetHistory(
+                jid,
+                lastMessage ? lastMessage.dataset.published : null,
+                (MovimUtils.urlParts().params[1] === 'room'),
+                false,
+                false
+            );
+        }
+    },
 };
 
 MovimWebsocket.attach(function () {
-    Chat_ajaxInit();
+    if (!Chat.pagination) {
+        Chat_ajaxInit();
+    }
 
     var jid = MovimUtils.urlParts().params[0];
-    var room = (MovimUtils.urlParts().params[1] === 'room');
+
     if (jid) {
-        if (Boolean(document.getElementById(MovimUtils.cleanupId(jid) + '-conversation')) && Chat.currentDateTime) {
-            Chat_ajaxGetHistory(jid, Chat.currentDateTime, room, false, true);
+        if (Boolean(document.getElementById(MovimUtils.cleanupId(jid) + '-conversation'))) {
+            Chat.getNewerMessages();
         } else {
-            if (room) {
-                Chat.getRoom(jid);
-            } else {
-                Chat.get(jid);
-            }
+            (MovimUtils.urlParts().params[1] === 'room')
+                ? Chat.getRoom(jid)
+                : Chat.get(jid);
         }
     } else {
         if (!MovimUtils.isMobile()) {

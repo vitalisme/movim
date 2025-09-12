@@ -15,13 +15,12 @@ use Moxl\Stanza\Stream;
 
 use Movim\Daemon\Session;
 
-use App\BundleCapabilityResolver;
 use App\Post;
 use App\Widgets\Chats\Chats;
 use App\Widgets\Dialog\Dialog;
-use App\Widgets\Visio\Visio;
 use Movim\CurrentCall;
 use Moxl\Xec\Action\Blocking\Request;
+use Moxl\Xec\Action\OMEMO\GetDevicesList;
 
 class Presence extends Base
 {
@@ -45,7 +44,7 @@ class Presence extends Base
     {
         $p = new Away;
         $p->setLast(Session::DOWN_TIMER)
-          ->request();
+            ->request();
     }
 
     public function onMyPresence($packet)
@@ -56,9 +55,6 @@ class Presence extends Base
     public function start()
     {
         $this->rpc('Notif.inhibit', 15);
-
-        // Load the BundleCapabilityResolved
-        BundleCapabilityResolver::getInstance()->load();
 
         if ($this->user->session->type == 'bind1') {
             // http://xmpp.org/extensions/xep-0280.html
@@ -102,9 +98,9 @@ class Presence extends Base
 
         $p = new Unavailable;
         $p->setType('terminate')
-          ->setResource($this->user->session->resource)
-          ->setTo($this->user->id)
-          ->request();
+            ->setResource($this->user->session->resource)
+            ->setTo($this->user->id)
+            ->request();
 
         Stream::end();
     }
@@ -128,13 +124,13 @@ class Presence extends Base
         // Private Subscritions
         $ps = new GetPubsubSubscriptions;
         $ps->setTo($this->user->id)
-           ->setPEPNode('urn:xmpp:pubsub:movim-public-subscription')
-           ->request();
+            ->setPEPNode('urn:xmpp:pubsub:movim-public-subscription')
+            ->request();
 
         // Public Subscritions
         $ps = new GetPubsubSubscriptions;
         $ps->setTo($this->user->id)
-           ->request();
+            ->request();
     }
 
     // We get the server capabilities
@@ -142,10 +138,10 @@ class Presence extends Base
     {
         $c = new \Moxl\Xec\Action\Disco\Request;
         $c->setTo($this->user->session->host)
-          ->request();
+            ->request();
 
         $c->setTo($this->user->id)
-          ->request();
+            ->request();
     }
 
     // We discover the server services
@@ -153,7 +149,7 @@ class Presence extends Base
     {
         $c = new \Moxl\Xec\Action\Disco\Items;
         $c->setTo($this->user->session->host)
-          ->request();
+            ->request();
     }
 
     // We refresh the profile
@@ -161,11 +157,11 @@ class Presence extends Base
     {
         $a = new \Moxl\Xec\Action\Avatar\Get;
         $a->setTo($this->user->id)
-          ->request();
+            ->request();
 
         $v = new \Moxl\Xec\Action\Vcard4\Get;
         $v->setTo($this->user->id)
-          ->request();
+            ->request();
     }
 
     // We refresh the bookmarks
@@ -173,13 +169,13 @@ class Presence extends Base
     {
         $b = new \Moxl\Xec\Action\Bookmark2\Get;
         $b->setTo($this->user->id)
-          ->request();
+            ->request();
 
         // Also get the old Bookmarks
         $b = new \Moxl\Xec\Action\Bookmark2\Get;
         $b->setTo($this->user->id)
-          ->setVersion('0')
-          ->request();
+            ->setVersion('0')
+            ->request();
     }
 
     // We refresh our personnal feed
@@ -187,8 +183,8 @@ class Presence extends Base
     {
         $r = new GetItemsId;
         $r->setTo($this->user->id)
-          ->setNode(Post::MICROBLOG_NODE)
-          ->request();
+            ->setNode(Post::MICROBLOG_NODE)
+            ->request();
     }
 
     public function preparePresence()

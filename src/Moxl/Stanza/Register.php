@@ -34,21 +34,27 @@ class Register
         \Moxl\API::request(\Moxl\API::iqWrapper($query, $to, 'set'));
     }
 
-    public static function remove()
+    public static function remove(?string $to)
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $query = $dom->createElementNS('jabber:iq:register', 'query');
         $query->appendChild($dom->createElement('remove'));
 
-        \Moxl\API::request(\Moxl\API::iqWrapper($query, false, 'set'));
+        \Moxl\API::request(\Moxl\API::iqWrapper($query, $to ?? false, 'set'));
     }
 
     public static function changePassword($to, $username, $password)
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $query = $dom->createElementNS('jabber:iq:register', 'query');
-        $query->appendChild($dom->createElement('username', $username));
-        $query->appendChild($dom->createElement('password', $password));
+
+        $usernameNode = $dom->createElement('username');
+        $usernameNode->appendChild($dom->createTextNode($username));
+        $query->appendChild($usernameNode);
+
+        $passwordNode = $dom->createElement('password');
+        $passwordNode->appendChild($dom->createTextNode($password));
+        $query->appendChild($passwordNode);
 
         \Moxl\API::request(\Moxl\API::iqWrapper($query, $to, 'set'));
     }

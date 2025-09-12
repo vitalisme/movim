@@ -27,13 +27,13 @@ use App\Widgets\Dialog\Dialog;
 use App\Widgets\Drawer\Drawer;
 use App\Widgets\Toast\Toast;
 use Respect\Validation\Validator;
-use Movim\EmbedLight;
 use Movim\Session;
 use Moxl\Xec\Action\Muc\ChangeAffiliation;
 use Moxl\Xec\Action\Presence\Muc;
 use Moxl\Xec\Action\Presence\Unavailable;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use Moxl\Xec\Action\Register\Remove;
 
 class RoomsUtils extends Base
 {
@@ -48,6 +48,8 @@ class RoomsUtils extends Base
         $this->registerEvent('disco_items_errorregistrationrequired', 'onDiscoRegistrationRequired');
         $this->registerEvent('muc_creategroupchat_handle', 'onChatroomCreated');
         $this->registerEvent('muc_createchannel_handle', 'onChatroomCreated');
+        $this->registerEvent('muc_creategroupchat_error', 'onChatroomCreatedError');
+        $this->registerEvent('muc_createchannel_error', 'onChatroomCreatedError');
         $this->registerEvent('muc_changeaffiliation_handle', 'onAffiliationChanged');
         $this->registerEvent('muc_changeaffiliation_errornotallowed', 'onAffiliationChangeUnauthorized');
         $this->registerEvent('message_invite_error', 'onInviteError');
@@ -99,14 +101,6 @@ class RoomsUtils extends Base
 
         $view->assign('me', $this->user->id);
 
-        $hasFingerprints = ($this->user->bundles()->whereIn('jid', function ($query) use ($room) {
-            $query->select('jid')
-                ->from('members')
-                ->where('conference', $room);
-        })->count() > 0 && $conference->isGroupChat());
-
-        $view->assign('hasfingerprints', $hasFingerprints);
-
         Drawer::fill('room_drawer', $view->draw('_rooms_drawer'));
         $this->rpc('Tabs.create');
 
@@ -120,8 +114,15 @@ class RoomsUtils extends Base
             $this->rpc('RoomsUtils_ajaxHttpGetLinks', $room);
         }
 
-        if ($this->user->hasOMEMO() && $hasFingerprints) {
-            $this->rpc('RoomsUtils.getDrawerFingerprints', $room);
+        if ($this->user->hasOMEMO() && $conference->isGroupChat()) {
+            $this->rpc(
+                'RoomsUtils.getDrawerFingerprints',
+                $room,
+                $conference->members()->whereNot('jid', $this->user->id)->get()->pluck('jid')->toArray()
+            );
+        } else {
+            $tpl = $this->tpl();
+            $this->rpc('MovimTpl.fill', '#room_omemo_fingerprints', $tpl->draw('_rooms_drawer_fingerprints_placeholder'));
         }
 
         (new AdHoc)->ajaxGet($room);
@@ -163,26 +164,27 @@ class RoomsUtils extends Base
         $this->rpc('MovimTpl.append', '#room_presences_list', $tpl->draw('_rooms_presences_list'));
     }
 
-    public function ajaxGetDrawerFingerprints($room, $deviceId)
+    public function ajaxGetDrawerFingerprints($room, $contactsFingerprints)
     {
-        $fingerprints = $this->user->bundles()
-            ->whereIn('jid', function ($query) use ($room) {
-                $query->select('jid')
-                    ->from('members')
-                    ->where('conference', $room);
-            })
-            ->with('capability.identities')
-            ->get()
-            ->mapToGroups(fn ($tuple) => [$tuple['jid'] => $tuple]);
+        $resolvedFingerprints = collect();
+
+        foreach ($contactsFingerprints as $contactFingerprints) {
+            if (!empty($contactFingerprints)) {
+                foreach ($contactFingerprints as $fingerprint) {
+                    $fingerprint->fingerprint = base64ToFingerPrint($fingerprint->fingerprint);
+                }
+
+                $resolvedFingerprints->put($contactFingerprints[0]->jid, $contactFingerprints);
+            }
+        }
 
         $tpl = $this->tpl();
-        $tpl->assign('fingerprints', $fingerprints);
-        $tpl->assign('deviceid', $deviceId);
+        $tpl->assign('fingerprints', $resolvedFingerprints);
         $tpl->assign('clienttype', getClientTypes());
-        $tpl->assign('contacts', Contact::whereIn('id', $fingerprints->keys())->get()->keyBy('id'));
+        $tpl->assign('contacts', Contact::whereIn('id', $resolvedFingerprints->keys())->get()->keyBy('id'));
 
         $this->rpc('MovimTpl.fill', '#room_omemo_fingerprints', $tpl->draw('_rooms_drawer_fingerprints'));
-        foreach ($fingerprints as $jid => $value) {
+        foreach ($resolvedFingerprints as $jid => $value) {
             $this->rpc('ContactActions.resolveSessionsStates', $jid, true);
         }
         $this->rpc('RoomsUtils.resolveRoomEncryptionState', $room);
@@ -334,6 +336,14 @@ class RoomsUtils extends Base
     }
 
     /**
+     * @brief If a chatroom creation is failing
+     */
+    public function onChatroomCreatedError($packet)
+    {
+        Toast::send($packet->content);
+    }
+
+    /**
      * @brief Get the subject form of a chatroom
      */
     public function ajaxGetSubject($room)
@@ -416,8 +426,8 @@ class RoomsUtils extends Base
             ->orderBy('server')
             ->get();
 
-        $gateways = $gateways->filter(fn ($gateway) => $gateway->parent === $this->user->session->host)
-            ->concat($gateways->reject(fn ($gateway) => $gateway->parent === $this->user->session->host));
+        $gateways = $gateways->filter(fn($gateway) => $gateway->parent === $this->user->session->host)
+            ->concat($gateways->reject(fn($gateway) => $gateway->parent === $this->user->session->host));
 
         $view->assign('gateways', $gateways);
 
@@ -455,6 +465,7 @@ class RoomsUtils extends Base
         } else {
             $m = new Muc;
             $m->enableCreate()
+                ->noNotify()
                 ->setTo(strtolower($form->jid->value))
                 ->setNickname($form->nick->value ?? $this->user->username)
                 ->request();
@@ -545,6 +556,10 @@ class RoomsUtils extends Base
         $d = new Delete;
         $d->setId($room)
             ->setVersion($conference->bookmarkversion)
+            ->request();
+
+        $unregister = new Remove;
+        $unregister->setTo($room)
             ->request();
     }
 
@@ -844,7 +859,7 @@ class RoomsUtils extends Base
     {
         $g = new \Moxl\Xec\Action\MAM\Get;
 
-        $message = \App\User::me()->messages()
+        $message = me()->messages()
             ->where('jidfrom', $jid)
             ->whereNull('subject');
 
@@ -893,7 +908,7 @@ class RoomsUtils extends Base
             return $item;
         })->map(function ($item, $key) use ($groups) {
             if ($item->parent != null && array_key_exists($item->parent, $groups) && $groups[$item->parent] == 1) {
-                $item->name = $item->parent . '/' .$item->name;
+                $item->name = $item->parent . '/' . $item->name;
                 $item->parent = null;
             }
 
@@ -914,8 +929,12 @@ class RoomsUtils extends Base
         $this->rpc('MovimTpl.fill', '#gateway_rooms', '');
     }
 
-    public function prepareEmbedUrl(EmbedLight $embed)
+    public function prepareEmbedUrl(Message $message)
     {
-        return (new Chat)->prepareEmbed($embed, true);
+        $resolved = $message->resolvedUrl->cache;
+
+        if ($resolved) {
+            return (new Chat())->prepareEmbed($resolved, $message);
+        }
     }
 }

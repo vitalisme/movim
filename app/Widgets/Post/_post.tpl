@@ -73,17 +73,7 @@
             {/if}
             {if="$public"}
                 <span class="control icon active">
-                    <a href="#"
-                    {if="$public"}
-                        {if="$post->isMicroblog()"}
-                            onclick="MovimUtils.reload('{$c->route('blog', [$post->server, $post->nodeid])}')"
-                        {else}
-                            onclick="MovimUtils.reload('{$c->route('community', [$post->server, $post->node, $post->nodeid])}')"
-                        {/if}
-                    {else}
-                        onclick="MovimUtils.reload('{$c->route('post', [$post->server, $post->node, $post->nodeid])}')"
-                    {/if}
-                    >
+                    <a href="{$post->getLink(true)}">
                         <i class="material-symbols">chevron_right</i>
                     </a>
                 </span>
@@ -152,31 +142,31 @@
 {/if}
 
 {if="$repost"}
-    <a href="{$c->route('contact', $post->contact->jid)}">
-        <ul class="list active middle">
-            <li>
-                <span class="primary icon bubble" style="background-image: url('{$post->contact->getPicture(\Movim\ImageSize::M)}');">
-                    <i class="material-symbols">loop</i>
-                </span>
-                <span class="control icon">
-                    <i class="material-symbols">chevron_right</i>
-                </span>
+    <ul class="list active middle">
+        <li onclick="MovimUtils.reload('{$c->route('contact', $post->contact->jid)}');">
+            <span class="primary icon bubble" style="background-image: url('{$post->contact->getPicture(\Movim\ImageSize::M)}');">
+                <i class="material-symbols">loop</i>
+            </span>
+            <span class="control icon">
+                <i class="material-symbols">chevron_right</i>
+            </span>
 
-                <div>
-                    <p>{$c->__('post.repost', $post->contact->truename)}</p>
-                    <p>{$c->__('post.repost_profile', $post->contact->truename)}</p>
-                </div>
-            </li>
-        </ul>
-    </a>
+            <div>
+                <p>{$c->__('post.repost', $post->contact->truename)}</p>
+                <p>{$c->__('post.see_profile', $post->contact->truename)}</p>
+            </div>
+        </li>
+    </ul>
 {/if}
 
 <section dir="{if="$post->isRTL()"}rtl{else}ltr{/if}">
     <div>
-        {if="$post->embed"}
-            <div class="video_embed shimmer">
-                <iframe class="spin" src="{$post->embed->href}" frameborder="0" allowfullscreen></iframe>
-            </div>
+        {if="$post->embeds->count() > 0"}
+            {loop="$post->embeds"}
+                <div class="video_embed shimmer">
+                    <iframe class="spin" src="{$value->href}" frameborder="0" allowfullscreen></iframe>
+                </div>
+            {/loop}
         {elseif="$post->isShort()"}
             {loop="$post->pictures"}
                 <img class="big_picture"
@@ -220,13 +210,16 @@
         </ul>
     {/if}
 
-    {if="$post->openlink && $post->openlink->url && (!defined('BASE_HOST') || $post->openlink->url.host != BASE_HOST)"}
-        <ul class="list middle flex active">
-            <li class="block large" onclick="MovimUtils.openInNew('{$post->openlink->href}')">
+    {if="!$public && $post->openlink && $post->openlink->url && (!defined('BASE_HOST') || $post->openlink->url.host != BASE_HOST)"}
+        <ul class="list middle flex">
+            <li class="block large">
                 <span class="primary icon gray">
                     <i class="material-symbols">wifi_tethering</i>
                 </span>
-                <span class="control icon gray">
+                <span class="control icon gray active" onclick="Preview.copyToClipboard('{$post->openlink->href}')">
+                    <i class="material-symbols">content_copy</i>
+                </span>
+                <span class="control icon gray active" onclick="MovimUtils.openInNew('{$post->openlink->href}')">
                     <i class="material-symbols">open_in_new</i>
                 </span>
                 <div>
@@ -234,24 +227,21 @@
                         {$c->__('post.public_yes')}
                     </p>
                     <p class="line">
-                        <a href="#">{$post->openlink->url.host}</a>
-                        {if="array_key_exists('path', $post->openlink->url) && $post->openlink->url.path != '/'"}
-                            <span class="second sticked">{$post->openlink->url.path}</span>
-                        {/if}
+                        <a href="#">{$post->openlink->url.host}</a>{if="array_key_exists('path', $post->openlink->url) && $post->openlink->url.path != '/'"}<span class="second sticked">{$post->openlink->url.path}</span>{/if}
                     </p>
                 </div>
             </li>
         </ul>
     {/if}
 
-    {if="$post->pictures()->count() > 0 && !$post->isBrief() && !$post->isShort()"}
+    {if="$post->pictures->count() > 0 && !$post->isBrief() && !$post->isShort()"}
         <ul class="list">
             <li class="subheader">
                 <div>
                     <p>
                         {$c->__('general.pictures')}
                         <span class="second">
-                            {$post->pictures()->count()}
+                            {$post->pictures->count()}
                             <i class="material-symbols">image</i>
                         </span>
                     </p>

@@ -119,7 +119,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: movim\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-02 23:43+0200\n"
+"POT-Creation-Date: 2025-07-14 21:08+0200\n"
 "PO-Revision-Date: 2015-06-24 09:45+0000\n"
 "Last-Translator: Marvin42 Marvin <h2g2.marvin.42@gmail.com>, 2017\n"
 "Language-Team: Romanian (http://app.transifex.com/movim/movim/language/ro/)\n"
@@ -195,9 +195,8 @@ msgid "Delete your account"
 msgstr "Șterge contul tău"
 
 #: [account]delete_text
-#, fuzzy
 msgid "You will delete your XMPP account and all the relative information linked to it (profile, contacts, and publications)."
-msgstr "Vei șterge contul tău XMPP și toate informațiile relative legate de acesta (profil, contacte și publicații)"
+msgstr ""
 
 #: [account]delete_text_confirm
 msgid "Type your full username"
@@ -216,9 +215,8 @@ msgid "Leave this instance"
 msgstr ""
 
 #: [account]clear_text
-#, fuzzy
 msgid "You will delete all the relative information linked to your account on this Movim instance (profile, contacts, and publications)."
-msgstr "Vei șterge contul tău XMPP și toate informațiile relative legate de acesta (profil, contacte și publicații)"
+msgstr ""
 
 #: [account]clear_text_confirm
 msgid "This action will not delete your account but will disconnect you from Movim."
@@ -467,9 +465,8 @@ msgid "Profile Picture Not Updated"
 msgstr ""
 
 #: [avatar]change
-#, fuzzy
 msgid "Change my profile picture"
-msgstr "Schimbă-mi parola"
+msgstr ""
 
 #: [banner]change
 msgid "Change my banner"
@@ -652,7 +649,7 @@ msgstr ""
 msgid "Refused call"
 msgstr ""
 
-#: [chat]jingle_end [visio]ended
+#: [chat]jingle_end
 msgid "Call ended"
 msgstr ""
 
@@ -1419,9 +1416,8 @@ msgid "Group"
 msgstr "Grup"
 
 #: [delete]text
-#, fuzzy
 msgid "You are going to remove one of your contacts, please confirm your action"
-msgstr "Veți șterge unul din contactele dumneavoastră, vă rugăm sa confirmați acțiunea"
+msgstr ""
 
 #: [age]years
 msgid "%s years"
@@ -1460,9 +1456,8 @@ msgid "But this contact can still see if you are online"
 msgstr "Dar acest contact poate vedea în continuare dacă sunteți online"
 
 #: [subscription]nil
-#, fuzzy
 msgid "You are not subscribed to anyone"
-msgstr "Nu sunteți abonat la acest contact"
+msgstr ""
 
 #: [subscription]nil_button [button]invite
 msgid "Invite"
@@ -1865,7 +1860,7 @@ msgstr ""
 msgid "This is a re-post from %s"
 msgstr ""
 
-#: [post]repost_profile
+#: [post]see_profile
 msgid "See %s profile"
 msgstr ""
 
@@ -1883,15 +1878,6 @@ msgstr ""
 
 #: [post]read_time_plural
 msgid "%s minutes"
-msgstr ""
-
-#: [post]public_title
-#, fuzzy
-msgid "Publish this post publicly"
-msgstr "Distribuie public acest abonament"
-
-#: [post]public_text
-msgid "This will allow anyone outside Movim to have access to your publication"
 msgstr ""
 
 #: [post]public_preview
@@ -1919,9 +1905,8 @@ msgid "Nobody will be able to like or comment"
 msgstr ""
 
 #: [post]comments_disabled_yes
-#, fuzzy
 msgid "Comments disabled for this post"
-msgstr "Abonamentele sunt dezactivate pentru această comunitate"
+msgstr ""
 
 #: [post]comments_disabled_no
 msgid "Comments enabled for this post"
@@ -1973,6 +1958,10 @@ msgstr ""
 
 #: [post]commented
 msgid "Commented"
+msgstr ""
+
+#: [post]subscription_required
+msgid "You must be subscribed to %s to see this publication"
 msgstr ""
 
 #: [hello]contact_post
@@ -2107,6 +2096,18 @@ msgstr ""
 msgid "You are not authorized to publish there"
 msgstr ""
 
+#: [publish]blog_presence
+msgid "Your blog is only accessible to your subscribers. You can make it accessible to anyone in the settings page."
+msgstr ""
+
+#: [publish]web_title
+msgid "Publish this post on your public blog"
+msgstr ""
+
+#: [publish]web_text
+msgid "This will allow anyone outside Movim to have access to your publication"
+msgstr ""
+
 #: [publishhelp]title [page]help
 msgid "Help"
 msgstr ""
@@ -2168,9 +2169,8 @@ msgid "Type of chatroom"
 msgstr ""
 
 #: [rooms]default_room
-#, fuzzy
 msgid "Standard chatroom"
-msgstr "ID Chatroom greșit"
+msgstr ""
 
 #: [rooms]gateway_room
 msgid "Gateway chatroom"
@@ -2181,14 +2181,12 @@ msgid "Show all chatrooms"
 msgstr ""
 
 #: [rooms]hide_disconnected
-#, fuzzy
 msgid "Hide disconnected chatrooms"
-msgstr "Decontactat de la chatroom"
+msgstr ""
 
 #: [rooms]destroy_title
-#, fuzzy
 msgid "Destroy the chatroom"
-msgstr "Decontactat de la chatroom"
+msgstr ""
 
 #: [rooms]destroy_text
 msgid "Are you sure you want to permanently destroy the following chatroom?"
@@ -2229,9 +2227,8 @@ msgid "My Favorite Room"
 msgstr ""
 
 #: [chatrooms]bad_id
-#, fuzzy
 msgid "Bad Chatroom Address"
-msgstr "ID Chatroom greșit"
+msgstr ""
 
 #: [chatrooms]empty_name
 msgid "Empty name"
@@ -2242,19 +2239,16 @@ msgid "Permanently leave a chatroom"
 msgstr ""
 
 #: [chatrooms]remove_text
-#, fuzzy
 msgid "You are going to permanently leave the following chatroom. Please confirm your action."
-msgstr "Veți șterge unul din contactele dumneavoastră, vă rugăm sa confirmați acțiunea"
+msgstr ""
 
 #: [chatrooms]connected
-#, fuzzy
 msgid "Joined the chatroom"
-msgstr "Conectat la chatroom"
+msgstr ""
 
 #: [chatrooms]disconnected
-#, fuzzy
 msgid "Left the chatroom"
-msgstr "Conectat la chatroom"
+msgstr ""
 
 #: [chatrooms]users
 msgctxt "[chatrooms]users"
@@ -2275,9 +2269,8 @@ msgid "Please enter a valid nickname (2 to 40 characters)"
 msgstr ""
 
 #: [chatrooms]conflict
-#, fuzzy
 msgid "Nickname already taken"
-msgstr "Nume utilizator deja folosit"
+msgstr ""
 
 #: [chatrooms]autojoin
 msgid "Join this chatroom on login"
@@ -2648,15 +2641,7 @@ msgid "Story deleted"
 msgstr ""
 
 #: [subscribe]info
-msgid "Movim is a decentralized social network, before creating a new account you need to choose a server to register."
-msgstr "Movim este a rețea descentralizată, înainte de a crea un cont, trebuie sa alegi un server pentru înregistrare"
-
-#: [subscribe]server_question
-msgid "Your server here?"
-msgstr ""
-
-#: [subscribe]server_contact
-msgid "Contact us to add yours to the officially supported servers list"
+msgid "Movim is a decentralized social network, you are invited to register on the following XMPP server(s)"
 msgstr ""
 
 #: [feed]title
@@ -2823,6 +2808,10 @@ msgstr ""
 msgid "…connecting"
 msgstr ""
 
+#: [visio]ended
+msgid "End of call"
+msgstr ""
+
 #: [visio]no_participants_left
 msgid "All participants have left the call"
 msgstr ""
@@ -2932,12 +2921,11 @@ msgid "News"
 msgstr "Știri"
 
 #: [page]avatar
-#, fuzzy
 msgid "Profile Picture"
-msgstr "Profil"
+msgstr ""
 
 #: [page]chats
-msgid "Direct Messages"
+msgid "Messages"
 msgstr ""
 
 #: [page]publish
@@ -3797,9 +3785,3 @@ msgstr ""
 #: [field]type_here
 msgid "Type here"
 msgstr ""
-
-#~ msgid "No subscriptions"
-#~ msgstr "Fără abonamente"
-
-#~ msgid "Avatar"
-#~ msgstr "Avatar"

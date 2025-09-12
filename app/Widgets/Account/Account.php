@@ -25,7 +25,7 @@ class Account extends \Movim\Widget\Base
         $this->registerEvent('register_get_errorfeaturenotimplemented', 'onRegisterError', 'configuration');
         $this->registerEvent('register_set_handle', 'onRegistered', 'configuration');
         $this->registerEvent('register_set_error', 'onRegisterError', 'configuration');
-        $this->registerEvent('omemo_setdevicelist_handle', 'onDeviceList', 'configuration');
+        $this->registerEvent('omemo_SetDevicesList_handle', 'onDeviceList', 'configuration');
         $this->registerEvent('adhoc_get_handle', 'onAdHocList');
     }
 
@@ -41,7 +41,8 @@ class Account extends \Movim\Widget\Base
         $view = $this->tpl();
         $view->assign('list', $list);
 
-        $this->rpc('MovimTpl.fill',
+        $this->rpc(
+            'MovimTpl.fill',
             '#gateway_' . cleanupId($package->from),
             $view->draw('_account_gateway_adhoc_list')
         );
@@ -57,8 +58,8 @@ class Account extends \Movim\Widget\Base
 
     public function onRemoved()
     {
-        $this->user->messages()->delete();
         \App\Post::restrictToMicroblog()->where('server', $this->user->id)->delete();
+        $this->user->delete();
         $this->rpc('Presence_ajaxLogout');
     }
 
@@ -94,7 +95,7 @@ class Account extends \Movim\Widget\Base
     {
         Toast::send(
             $packet->content ??
-            $this->__('error.oops')
+                $this->__('error.oops')
         );
     }
 
@@ -157,35 +158,33 @@ class Account extends \Movim\Widget\Base
             $view->assign('presences', $presences);
             $view->assign('clienttype', getClientTypes());
 
-            $this->rpc('MovimTpl.fill',
+            $this->rpc(
+                'MovimTpl.fill',
                 '#account_presences',
                 $view->draw('_account_presences')
             );
         }
     }
 
-    public function ajaxHttpGetFingerprints($identity, array $resolvedDeviceIds)
+    public function ajaxHttpGetFingerprints(array $fingerprints)
     {
         $view = $this->tpl();
 
-        $fingerprints = $this->user->bundles()->where('jid', $this->user->id)->get();
+        $fingerprints = collect($fingerprints);
 
-        foreach($fingerprints as $fingerprint) {
-            $fingerprint->self = ($fingerprint->identitykey == $identity);
-            $fingerprint->built = in_array($fingerprint->bundleid, $resolvedDeviceIds);
+        foreach ($fingerprints as $fingerprint) {
+            $fingerprint->fingerprint = base64ToFingerPrint($fingerprint->fingerprint);
         }
 
-        $fingerprints = $fingerprints->sortByDesc('self')->keyBy('bundleid');
-
         $latests = \App\Message::selectRaw('max(published) as latest, bundleid')
-                               ->where('user_id', $this->user->id)
-                               ->where('jidfrom', $this->user->id)
-                               ->groupBy('bundleid')
-                               ->pluck('latest', 'bundleid');
+            ->where('user_id', $this->user->id)
+            ->where('jidfrom', $this->user->id)
+            ->groupBy('bundleid')
+            ->pluck('latest', 'bundleid');
 
-        foreach ($fingerprints->keys() as $key) {
-            $fingerprints[$key]->latest = $latests->has($key)
-                ? $latests[$key]
+        foreach ($fingerprints as $fingerprint) {
+            $fingerprint->latest = $latests->has($fingerprint->bundleid)
+                ? $latests[$fingerprint->bundleid]
                 : null;
         }
 
@@ -198,26 +197,26 @@ class Account extends \Movim\Widget\Base
         $this->rpc('Account.resolveSessionsStates');
     }
 
-    public function ajaxDeleteBundleConfirm(int $id)
+    public function ajaxDeleteBundle($fingerprint)
     {
+        $fingerprint->fingerprint = base64ToFingerPrint($fingerprint->fingerprint);
+
         $view = $this->tpl();
-        $view->assign('bundle', $this->user->bundles()
-                                           ->where('jid', $this->user->id)
-                                           ->where('bundleid', $id)
-                                           ->first());
+        $view->assign('fingerprint', $fingerprint);
         Dialog::fill($view->draw('_account_delete_bundle'));
+    }
+
+    public function ajaxDeleteBundleConfirm(int $id, array $devicesIds)
+    {
+        $db = new DeleteBundle;
+        $db->setId($id)
+            ->setDevicesIds($devicesIds)
+            ->request();
     }
 
     public function ajaxGetGateways()
     {
         $this->rpc('MovimTpl.fill', '#account_gateways', $this->prepareGateways());
-    }
-
-    public function ajaxDeleteBundle(int $id)
-    {
-        $db = new DeleteBundle;
-        $db->setId($id)
-           ->request();
     }
 
     public function ajaxRemoveAccountConfirm($form)
@@ -238,7 +237,7 @@ class Account extends \Movim\Widget\Base
 
         $da = new Get;
         $da->setTo($server)
-           ->request();
+            ->request();
     }
 
     public function ajaxRegister($server, $form)
@@ -248,8 +247,8 @@ class Account extends \Movim\Widget\Base
         }
         $s = new Set;
         $s->setTo($server)
-          ->setData(formToArray($form))
-          ->request();
+            ->setData(formToArray($form))
+            ->request();
     }
 
     public function prepareGateways()
@@ -285,7 +284,5 @@ class Account extends \Movim\Widget\Base
         return 'list_alt';
     }
 
-    public function display()
-    {
-    }
+    public function display() {}
 }

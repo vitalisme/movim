@@ -28,7 +28,7 @@ class Presence
         $root = $dom->createElementNS('jabber:client', 'presence');
         $dom->appendChild($root);
 
-        $me = \App\User::me();
+        $me = me();
 
         if ($me && $me->session) {
             $root->setAttribute('from', $me->id . '/' . $me->session->resource);
@@ -88,6 +88,15 @@ class Presence
 
             $root->appendChild($x);
         }
+
+        $c = $dom->createElementNS('urn:xmpp:caps', 'c');
+        $hash = $dom->createElement('hash', \Moxl\Utils::getOwnCapabilityHash());
+        $hash->setAttribute('xmlns', 'urn:xmpp:hashes:2');
+        $hash->setAttribute('algo', \Moxl\Utils::CAPABILITY_HASH_ALGORITHM);
+
+        $c->appendChild($hash);
+
+        $root->appendChild($c);
 
         $c = $dom->createElementNS('http://jabber.org/protocol/caps', 'c');
         $c->setAttribute('hash', 'sha-1');

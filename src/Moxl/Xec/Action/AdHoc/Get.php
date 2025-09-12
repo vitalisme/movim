@@ -23,7 +23,7 @@ class Get extends Action
 
     public function error(string $errorId, ?string $message = null)
     {
-        $this->pack($stanza->query->item, $this->_to);
+        $this->pack($message, $this->_to);
         $this->deliver();
     }
 }

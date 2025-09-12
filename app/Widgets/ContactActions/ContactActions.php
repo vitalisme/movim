@@ -2,6 +2,7 @@
 
 namespace App\Widgets\ContactActions;
 
+use App\Message;
 use App\Widgets\AdHoc\AdHoc;
 use App\Widgets\Chat\Chat;
 use App\Widgets\Chats\Chats;
@@ -11,6 +12,8 @@ use App\Widgets\Toast\Toast;
 use Movim\CurrentCall;
 use Movim\EmbedLight;
 use Movim\Widget\Base;
+use Moxl\Xec\Action\Blocking\Block;
+use Moxl\Xec\Action\Blocking\Unblock;
 
 class ContactActions extends Base
 {
@@ -70,12 +73,9 @@ class ContactActions extends Base
             $tpl->assign('roster', null);
         }
 
-        $hasFingerprints = ($this->user->bundles()->where('jid', $jid)->count() > 0);
-
         $tpl->assign('jid', $jid);
         $tpl->assign('incall', CurrentCall::getInstance()->isStarted());
         $tpl->assign('clienttype', getClientTypes());
-        $tpl->assign('hasfingerprints', $hasFingerprints);
         $tpl->assign('posts', \App\Post::where('server', $jid)
             ->restrictToMicroblog()
             ->where('open', true)
@@ -95,20 +95,20 @@ class ContactActions extends Base
             $this->rpc('ContactActions_ajaxHttpGetLinks', $jid);
         }
 
-        if ($this->user->hasOMEMO() && $hasFingerprints) {
+        if ($this->user->hasOMEMO()) {
             $this->rpc('ContactActions.getDrawerFingerprints', $jid);
         }
 
         (new AdHoc)->ajaxGet($jid);
     }
 
-    public function ajaxGetDrawerFingerprints($jid, $deviceId)
+    public function ajaxGetDrawerFingerprints(string $jid, array $fingerprints)
     {
-        $fingerprints = $this->user->bundles()
-                                   ->where('jid', $jid)
-                                   ->with('capability.identities')
-                                   ->get()
-                                   ->keyBy('bundleid');
+        $fingerprints = collect($fingerprints);
+
+        foreach ($fingerprints as $fingerprint) {
+            $fingerprint->fingerprint = base64ToFingerPrint($fingerprint->fingerprint);
+        }
 
         $latests = \App\Message::selectRaw('max(published) as latest, bundleid')
                                ->where('user_id', $this->user->id)
@@ -116,15 +116,14 @@ class ContactActions extends Base
                                ->groupBy('bundleid')
                                ->pluck('latest', 'bundleid');
 
-        foreach ($fingerprints->keys() as $key) {
-            $fingerprints[$key]->latest = $latests->has($key)
-                ? $latests[$key]
+        foreach ($fingerprints as $fingerprint) {
+            $fingerprint->latest = $latests->has($fingerprint->bundleid)
+                ? $latests[$fingerprint->bundleid]
                 : null;
         }
 
         $tpl = $this->tpl();
         $tpl->assign('fingerprints', $fingerprints);
-        $tpl->assign('deviceid', $deviceId);
         $tpl->assign('clienttype', getClientTypes());
 
         $this->rpc('MovimTpl.fill', '#omemo_fingerprints', $tpl->draw('_contactactions_drawer_fingerprints'));
@@ -145,6 +144,20 @@ class ContactActions extends Base
 
             $this->rpc('MovimUtils.reload', $this->route('chat', $jid));
         }
+    }
+
+    public function ajaxBlock(string $jid)
+    {
+        $block = new Block;
+        $block->setJid($jid);
+        $block->request();
+    }
+
+    public function ajaxUnblock(string $jid)
+    {
+        $block = new Unblock;
+        $block->setJid($jid);
+        $block->request();
     }
 
     public function ajaxHttpGetPictures($jid, $page = 0)
@@ -196,9 +209,13 @@ class ContactActions extends Base
         $this->rpc('MovimTpl.append', '#contact_links', $tpl->draw('_contactactions_drawer_links'));
     }
 
-    public function prepareEmbedUrl(EmbedLight $embed)
+    public function prepareEmbedUrl(Message $message)
     {
-        return (new Chat())->prepareEmbed($embed, true);
+        $resolved = $message->resolvedUrl->cache;
+
+        if ($resolved) {
+            return (new Chat())->prepareEmbed($resolved, $message);
+        }
     }
 
     public function prepareTicket(\App\Post $post)

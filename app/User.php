@@ -60,6 +60,11 @@ class User extends Model
         return $this->hasMany('App\Message');
     }
 
+    public function MAMEarliests()
+    {
+        return $this->hasMany('App\MAMEarliest');
+    }
+
     public function openChats()
     {
         return $this->hasMany('App\OpenChat');
@@ -68,11 +73,6 @@ class User extends Model
     public function drafts()
     {
         return $this->hasMany('App\Draft');
-    }
-
-    public function bundles()
-    {
-        return $this->hasMany('App\Bundle');
     }
 
     public function pushSubscriptions()

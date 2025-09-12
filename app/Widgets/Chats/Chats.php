@@ -10,6 +10,7 @@ use App\Message;
 use App\OpenChat;
 use App\Roster;
 use App\User;
+use App\Widgets\Chat\Chat;
 use Carbon\Carbon;
 use Movim\CurrentCall;
 
@@ -182,8 +183,9 @@ class Chats extends Base
             if ($message && $message->published) {
                 $g->setStart(strtotime($message->published) + 1);
             } else {
-                // We only sync up the last month the first time
-                $g->setStart(\Carbon\Carbon::now()->subMonth()->timestamp);
+                // We sync up the last 500 messages at first
+                $g->setLimit(500);
+                $g->setBefore('');
             }
 
             $g->request();
@@ -254,8 +256,10 @@ class Chats extends Base
         $tpl->cacheClear('_chats_item', $jid);
 
         $this->rpc('MovimTpl.remove', $this->getItemId($jid));
-        $this->rpc('Chat_ajaxClearCounter', $jid);
         $this->rpc('Chats.refresh');
+
+        // Clear the counter
+        (new Chat)->getMessages($jid, seenOnly: true, event: false);
 
         if ($closeDiscussion) {
             $this->rpc('Chat_ajaxGet');
@@ -412,17 +416,17 @@ class Chats extends Base
             ->whereNotIn('jidfrom', function ($query) {
                 $query->select('jid')
                     ->from('open_chats')
-                    ->where('user_id', \App\User::me()->id);
+                    ->where('user_id', me()->id);
             })
             ->whereNotIn('jidto', function ($query) {
                 $query->select('jid')
                     ->from('open_chats')
-                    ->where('user_id', \App\User::me()->id);
+                    ->where('user_id', me()->id);
             })
             ->groupBy('jidfrom', 'jidto')
             ->get()
             ->each(function ($message) use (&$toOpen) {
-                $jid = $message->jidfrom == \App\User::me()->id
+                $jid = $message->jidfrom == me()->id
                     ? $message->jidto
                     : $message->jidfrom;
 
@@ -437,7 +441,7 @@ class Chats extends Base
 
         foreach ($toOpen as $jid => $published) {
             $openChat = new OpenChat;
-            $openChat->user_id = \App\User::me()->id;
+            $openChat->user_id = me()->id;
             $openChat->jid = $jid;
             $openChat->created_at = $openChat->updated_at = $published;
             $openChat->save(['timestamps' => false]);
