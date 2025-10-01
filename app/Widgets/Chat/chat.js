@@ -658,10 +658,11 @@ var Chat = {
     },
     setScrollBehaviour: function () {
         var discussion = Chat.getDiscussion();
-        if (discussion == null) return;
+        if (!discussion) return;
 
         discussion.onscroll = function () {
-            if (this.scrollTop < 1) {
+            // Don't get more history the conversation is already empty
+            if (discussion.querySelector('.conversation').innerHTML != '' && this.scrollTop < 10) {
                 Chat.getHistory(true);
             }
 
@@ -672,7 +673,7 @@ var Chat = {
     },
     setScroll: function () {
         var discussion = Chat.getDiscussion();
-        if (discussion == null) return;
+        if (!discussion) return;
 
         Chat.lastHeight = discussion.scrollHeight;
         Chat.lastScroll = discussion.scrollTop + discussion.clientHeight;
@@ -700,7 +701,7 @@ var Chat = {
     },
     scrollTotally: function () {
         var discussion = Chat.getDiscussion();
-        if (discussion == null) return;
+        if (!discussion) return;
 
         discussion.scrollTop = discussion.scrollHeight;
     },
@@ -722,7 +723,7 @@ var Chat = {
     },
     scrollToSeparator: function () {
         var discussion = Chat.getDiscussion();
-        if (discussion == null) return;
+        if (!discussion) return;
 
         var separator = discussion.querySelector('.separator');
         if (separator) {
@@ -1273,6 +1274,8 @@ var Chat = {
     appendDate: function (date, prepend) {
         var list = document.querySelector('#chat_widget > div ul.conversation');
 
+        if (!list) return;
+
         dateNode = Chat.date.cloneNode(true);
         dateNode.querySelector('p').innerHTML = date;
         dateNode.id = MovimUtils.cleanupId(date);
@@ -1343,8 +1346,18 @@ var Chat = {
         return ul;
     },
     getFileHtml: function (file, data) {
+        // Inline files
+        if (file.disposition == 'inline' && (!file.preview || !file.preview.height) && file.type.substring(0, 5) == 'image') {
+            var img = document.createElement('img');
+            img.classList.add('sticker');
+            img.setAttribute('src', file.url);
+            img.setAttribute('height', '170');
+
+            return img;
+        }
+
         var div = document.createElement('div');
-        div.setAttribute('class', 'file');
+        div.classList.add('file');
 
         if (file.name) {
             div.dataset.type = file.type;
@@ -1391,9 +1404,10 @@ var Chat = {
 
             var url = new URL(file.url);
 
-            // Tenor implementation
+            // Tenor implementation and inline files
             if (url.host && url.host == 'media.tenor.com'
-                || file.type == 'audio/ogg' || file.type == 'audio/opus' || file.type == 'audio/mpeg') {
+                || file.type == 'audio/ogg' || file.type == 'audio/opus' || file.type == 'audio/mpeg'
+                || file.disposition == 'inline') {
                 return div;
             }
 
@@ -1491,7 +1505,7 @@ var Chat = {
         var url = new URL(file.url);
 
         // Tenor implementation
-        if (url.host && url.host == 'media.tenor.com') {
+        if ((url.host && url.host == 'media.tenor.com') || file.disposition == 'inline') {
             video.classList.add('gif');
         } else {
             video.setAttribute('controls', 'controls');

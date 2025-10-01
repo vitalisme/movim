@@ -31,6 +31,12 @@ v0.32 (master)
 * Add a templater worker and start to offload some widget calls to it
 * Refactor and simplify the internal events system, enforce Packet everywhere
 * Remove the necessity to launch the Login page to cache the BASE_URI for the daemon launch
+* Containerfile and podman-compose test scripts
+* Fix #1433 Use directly the Carbon object and not createFromFormat() in Contact::isOld()
+* Allow chatroom admins to configure the user voice, related to #1478
+* Material Design 3 CSS changes
+* Enforce Packet parameters in all the Widgets
+* Drop php-curl dependency and replace it with reactphp/http
 
 v0.31
 ---------------------------

@@ -21,6 +21,7 @@ use App\Widgets\Dialog\Dialog;
 use App\Widgets\Drawer\Drawer;
 use App\Widgets\Post\Post;
 use App\Widgets\Toast\Toast;
+use Moxl\Xec\Payload\Packet;
 
 class Publish extends Base
 {
@@ -28,6 +29,7 @@ class Publish extends Base
     {
         $this->registerEvent('pubsub_postpublish_handle', 'onPublish');
         $this->registerEvent('pubsub_postpublish_errorforbidden', 'onPublishErrorForbidden');
+        $this->registerEvent('pubsub_postpublish_errorpayloadtoobig', 'onPayloadTooBig');
         $this->registerEvent('microblog_commentcreatenode_handle', 'onCommentNodeCreated');
         $this->registerEvent('pubsub_getconfig_handle', 'onBlogConfig');
 
@@ -35,7 +37,7 @@ class Publish extends Base
         $this->addcss('publish.css');
     }
 
-    public function onPublish($packet)
+    public function onPublish(Packet $packet)
     {
         Toast::send($this->__('post.published'));
 
@@ -52,33 +54,38 @@ class Publish extends Base
         }
     }
 
-    public function onBlogConfig($package)
+    public function onBlogConfig(Packet $packet)
     {
-        if ($package->content['access_model'] == 'presence') {
+        if ($packet->content['access_model'] == 'presence') {
             $view = $this->tpl();
             $this->rpc('MovimTpl.fill', '#publish_blog_presence', $view->draw('_publish_blog_presence'));
         }
     }
 
-    public function onPublishErrorForbidden($packet)
+    public function onPublishErrorForbidden(Packet $packet)
     {
         Toast::send($this->__('publish.publish_error_forbidden'));
-
         $this->rpc('Publish.enableSend');
     }
 
-    public function onCommentNodeCreated($packet)
+    public function onPayloadTooBig(Packet $packet)
+    {
+        Toast::send($this->__('publish.publish_error_payload_to_big'));
+        $this->rpc('Publish.enableSend');
+    }
+
+    public function onCommentNodeCreated(Packet $packet)
     {
         list($server, $parentid) = array_values($packet->content);
 
         $s = new Subscribe;
         $s->setTo($server)
             ->setFrom($this->me->id)
-            ->setNode('urn:xmpp:microblog:0:comments/' . $parentid)
+            ->setNode(AppPost::COMMENTS_NODE . '/' . $parentid)
             ->request();
     }
 
-    public function ajaxCreateComments($server, $id)
+    public function ajaxCreateComments(string $server, string $id)
     {
         if (!validateServerNode($server, $id)) {
             return;
@@ -141,6 +148,12 @@ class Publish extends Base
         $draft = $this->me->drafts()->find($id);
 
         if ($draft && $draft->isNotEmpty()) {
+            if (!$draft->isSmallEnough()) {
+                $this->rpc('Publish.enableSend');
+                Toast::send($this->__('publish.too_long', Draft::LENGTH_LIMIT));
+                return;
+            }
+
             $p = new PostPublish;
             $p->setFrom($this->me->id)
                 ->setTo($draft->server)
@@ -363,8 +376,8 @@ class Publish extends Base
             $slug = $this->titleToSlug($draft->title);
 
             $view->assign('link', ($draft->node == AppPost::MICROBLOG_NODE)
-                    ? $this->route('blog', [$draft->server, $slug])
-                    : $this->route('community', [$draft->server, $draft->node, $slug]));
+                ? $this->route('blog', [$draft->server, $slug])
+                : $this->route('community', [$draft->server, $draft->node, $slug]));
 
             $this->rpc('MovimTpl.fill', '#publish_preview_url', $view->draw('_publish_preview_url'));
             return;

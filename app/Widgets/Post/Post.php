@@ -36,11 +36,10 @@ class Post extends Base
         if ($post) {
             if ($post->isComment()) {
                 $parent = $post->getParent();
-
                 $this->rpc(
                     'MovimTpl.fill',
                     '#post_widget.' . cleanupId($parent->nodeid) . ' #comments',
-                    $this->prepareComments($post->getParent())
+                    $this->prepareComments($parent)
                 );
                 $this->rpc('MovimUtils.applyAutoheight');
             } else {
@@ -56,8 +55,7 @@ class Post extends Base
 
     public function onCommentPublished(Packet $packet)
     {
-        $isLike = $packet->content;
-        Toast::send($isLike
+        Toast::send($packet->content
             ? $this->__('post.comment_like_published')
             : $this->__('post.comment_published'));
     }
@@ -95,7 +93,7 @@ class Post extends Base
         $this->rpc('MovimTpl.fill', '#comments', $view->draw('_post_comments_error'));
     }
 
-    public function onDelete($packet)
+    public function onDelete(Packet $packet)
     {
         $this->rpc('Post.refreshComments');
     }
@@ -201,7 +199,7 @@ class Post extends Base
             $cp = new CommentPublish;
             $cp->setTo($p->commentserver)
                 ->setFrom($this->me->id)
-                ->setCommentNodeId($p->commentnodeid)
+                ->setId($p->commentnodeid)
                 ->setTitle(htmlspecialchars(rawurldecode($comment)))
                 ->setParentId($p->id)
                 ->request();
@@ -245,7 +243,7 @@ class Post extends Base
                 && !$public && !$card
             ) {
                 if ($requestComments) {
-                    $this->requestComments($post); // Broken in case of repost
+                    $this->rpc('Post_ajaxGetPostComments', $post->server, $post->node, $post->nodeid); // Broken in case of repost
                 }
             } elseif (!$card) {
                 $viewd = $this->tpl();

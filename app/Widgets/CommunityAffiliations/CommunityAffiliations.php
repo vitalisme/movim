@@ -3,6 +3,7 @@
 namespace App\Widgets\CommunityAffiliations;
 
 use App\Affiliation;
+use App\Post;
 use App\Widgets\CommunityHeader\CommunityHeader;
 use App\Widgets\Dialog\Dialog;
 use App\Widgets\Toast\Toast;
@@ -12,7 +13,7 @@ use Moxl\Xec\Action\Pubsub\Delete;
 use Moxl\Xec\Action\Pubsub\GetAffiliations;
 use Moxl\Xec\Action\Pubsub\SetAffiliations;
 use Moxl\Xec\Action\Pubsub\GetSubscriptions;
-
+use Moxl\Xec\Payload\Packet;
 use Respect\Validation\Validator;
 
 class CommunityAffiliations extends Base
@@ -29,7 +30,7 @@ class CommunityAffiliations extends Base
         $this->addjs('communityaffiliations.js');
     }
 
-    public function onAffiliations($packet)
+    public function onAffiliations(Packet $packet)
     {
         list($server, $node) = array_values($packet->content);
 
@@ -86,12 +87,12 @@ class CommunityAffiliations extends Base
         );
     }
 
-    public function onAffiliationsSet($packet)
+    public function onAffiliationsSet(Packet $packet)
     {
         Toast::send($this->__('communityaffiliation.role_set'));
     }
 
-    public function onSubscriptions($packet)
+    public function onSubscriptions(Packet $packet)
     {
         list($subscriptions, $server, $node) = array_values($packet->content);
 
@@ -106,11 +107,11 @@ class CommunityAffiliations extends Base
         Dialog::fill($view->draw('_communityaffiliations_subscriptions'), true);
     }
 
-    private function deleted($packet)
+    private function deleted(Packet $packet)
     {
         if (
             $packet->content['server'] != $this->me->id
-            && substr($packet->content['node'], 0, 29) != 'urn:xmpp:microblog:0:comments'
+            && str_starts_with($packet->content['node'], Post::COMMENTS_NODE)
         ) {
             $this->rpc(
                 'MovimUtils.redirect',
@@ -122,14 +123,14 @@ class CommunityAffiliations extends Base
         }
     }
 
-    public function onDelete($packet)
+    public function onDelete(Packet $packet)
     {
         Toast::send($this->__('communityaffiliation.deleted'));
 
         $this->deleted($packet);
     }
 
-    public function onDeleteError($packet)
+    public function onDeleteError(Packet $packet)
     {
         Toast::send($this->__('communityaffiliation.delete_error'));
 

@@ -7,6 +7,7 @@ use App\Widgets\Toast\Toast;
 use Movim\Widget\Base;
 
 use Moxl\Xec\Action\Upload\Request;
+use Moxl\Xec\Payload\Packet;
 
 class Upload extends Base
 {
@@ -28,9 +29,9 @@ class Upload extends Base
         }
     }
 
-    public function onRequested($package)
+    public function onRequested(Packet $packet)
     {
-        $content = $package->content;
+        $content = $packet->content;
 
         $upload = \App\Upload::find($content['id']);
         $upload->puturl = $content['put'];

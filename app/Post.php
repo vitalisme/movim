@@ -36,6 +36,7 @@ class Post extends Model
     public $tags = [];
 
     public const MICROBLOG_NODE = 'urn:xmpp:microblog:0';
+    public const COMMENTS_NODE = 'urn:xmpp:microblog:0:comments';
     public const STORIES_NODE = 'urn:xmpp:pubsub-social-feed:stories:0';
 
     public function contact()
@@ -512,7 +513,7 @@ class Post extends Model
 
         if ($summary != null || $content != null) {
             $this->content = trim((string)$summary . (string)$content);
-            $this->contentcleaned = requestAPI('purifyhtml', 2, ['content' => $this->content]);
+            $this->contentcleaned = purifyHTML(html_entity_decode($this->content));//requestAPI('purifyhtml', post: ['content' => $this->content]);
         }
 
         $this->updated = ($entry->entry->updated)
@@ -823,14 +824,14 @@ class Post extends Model
         return \App\Post::find($this->parent_id);
     }
 
-    public function isMine($force = false): bool
+    public function isMine(User $me, ?bool $force = false): bool
     {
         if ($force) {
-            return ($this->aid == me()->id);
+            return ($this->aid == $me->id);
         }
 
-        return ($this->aid == me()->id
-            || $this->server == me()->id);
+        return ($this->aid == $me->id
+            || $this->server == $me->id);
     }
 
     public function isMicroblog(): bool
@@ -880,7 +881,7 @@ class Post extends Model
 
     public function isComment(): bool
     {
-        return (substr($this->node, 0, 30) == 'urn:xmpp:microblog:0:comments/');
+        return (str_starts_with($this->node, Post::COMMENTS_NODE));
     }
 
     public function hasCommentsNode(): bool

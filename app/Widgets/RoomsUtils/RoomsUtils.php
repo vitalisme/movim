@@ -33,6 +33,7 @@ use Moxl\Xec\Action\Presence\Muc;
 use Moxl\Xec\Action\Presence\Unavailable;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use Moxl\Xec\Action\Muc\SetRole;
 use Moxl\Xec\Action\Register\Remove;
 
 class RoomsUtils extends Base
@@ -52,6 +53,7 @@ class RoomsUtils extends Base
         $this->registerEvent('muc_createchannel_error', 'onChatroomCreatedError');
         $this->registerEvent('muc_changeaffiliation_handle', 'onAffiliationChanged');
         $this->registerEvent('muc_changeaffiliation_errornotallowed', 'onAffiliationChangeUnauthorized');
+        $this->registerEvent('muc_setrole_handle', 'onSetRole');
         $this->registerEvent('message_invite_error', 'onInviteError');
 
         $this->registerEvent('presence_muc_create_handle', 'onMucCreated');
@@ -236,31 +238,36 @@ class RoomsUtils extends Base
         $r->setData($vcard)->setTo($room)->request();
     }
 
-    public function onAvatarSet($packet)
+    public function onAvatarSet(Packet $packet)
     {
         $this->rpc('Dialog_ajaxClear');
         Toast::send($this->__('avatar.updated'));
     }
 
-    public function onMucCreated($packet)
+    public function onMucCreated(Packet $packet)
     {
         $this->rpc('RoomsUtils.configureCreatedRoom');
     }
 
-    public function onPresenceMucNotAllowed($packet)
+    public function onPresenceMucNotAllowed(Packet $packet)
     {
         Toast::send($this->__('chatrooms.notallowed'));
     }
 
-    public function onDiscoRegistrationRequired($packet)
+    public function onDiscoRegistrationRequired(Packet $packet)
     {
         Toast::send($this->__('rooms.disco_registration_required'));
+    }
+
+    public function onSetRole(Packet $packet)
+    {
+        Toast::send($this->__('room.role_changed'));
     }
 
     /**
      * @brief Affiliation changed for a user
      */
-    public function onAffiliationChanged($packet)
+    public function onAffiliationChanged(Packet $packet)
     {
         $affiliation = $packet->content;
 
@@ -290,7 +297,7 @@ class RoomsUtils extends Base
     /**
      * @brief When the affiliation change is unauthorized
      */
-    public function onAffiliationChangeUnauthorized($packet)
+    public function onAffiliationChangeUnauthorized(Packet $packet)
     {
         Toast::send($this->__('room.change_affiliation_unauthorized'));
     }
@@ -298,7 +305,7 @@ class RoomsUtils extends Base
     /**
      * @brief If a chatroom is successfuly created
      */
-    public function onChatroomCreated($packet)
+    public function onChatroomCreated(Packet $packet)
     {
         Toast::send($this->__('chatrooms.created'));
 
@@ -338,7 +345,7 @@ class RoomsUtils extends Base
     /**
      * @brief If a chatroom creation is failing
      */
-    public function onChatroomCreatedError($packet)
+    public function onChatroomCreatedError(Packet $packet)
     {
         Toast::send($packet->content);
     }
@@ -405,6 +412,9 @@ class RoomsUtils extends Base
             ->whereCategory('conference')
             ->first());
         $view->assign('mucservice', \App\Info::where('parent', $this->me->session->host)
+            ->whereDoesntHave('identities', function ($query)  {
+                $query->where('category', 'gateway');
+            })
             ->whereCategory('conference')
             ->whereType('text')
             ->first());
@@ -610,7 +620,7 @@ class RoomsUtils extends Base
         }
     }
 
-    public function onInviteError($packet)
+    public function onInviteError(Packet $packet)
     {
         Toast::send($packet->content);
     }
@@ -816,9 +826,9 @@ class RoomsUtils extends Base
     }
 
     /**
-     * @brief Show the change affiliation form
+     * @brief Show the user configuration panel
      */
-    public function ajaxChangeAffiliation(string $room, string $jid)
+    public function ajaxConfigureUser(string $room, string $jid)
     {
         if (!validateRoom($room)) {
             return;
@@ -830,10 +840,37 @@ class RoomsUtils extends Base
 
         $view = $this->tpl();
         $view->assign('room', $conference);
+        $view->assign('presence', $conference->presences()->where('mucjid', $jid)->first());
         $view->assign('member', $conference->members()->where('jid', $jid)->first());
-        $view->assign('jid', $jid);
+        $view->assign('contact', Contact::firstOrNew(['id' => $jid]));
 
-        Dialog::fill($view->draw('_rooms_change_affiliation'));
+        Dialog::fill($view->draw('_rooms_configure_user'));
+    }
+
+    /**
+     * @brief Change a user voice
+     */
+    public function ajaxChangeVoice(string $room, string $mucjid, $form)
+    {
+        if (!validateRoom($room)) {
+            return;
+        }
+
+        $conference = $this->me->session->conferences()
+            ->where('conference', $room)
+            ->first();
+
+        if ($conference) {
+            $presence = $conference->presences()->where('mucjid', $mucjid)->first();
+
+            if ($presence) {
+                $p = new SetRole;
+                $p->setTo($room)
+                    ->setNick($presence->resource)
+                    ->setRole($form->voice->value ? 'participant' : 'visitor')
+                    ->request();
+            }
+        }
     }
 
     /**
@@ -879,7 +916,7 @@ class RoomsUtils extends Base
         $g->request();
     }
 
-    public function onDiscoGateway($packet)
+    public function onDiscoGateway(Packet $packet)
     {
         $view = $this->tpl();
 
@@ -919,7 +956,7 @@ class RoomsUtils extends Base
         $this->rpc('MovimTpl.fill', '#gateway_rooms', $view->draw('_rooms_gateway_rooms'));
     }
 
-    public function onDiscoGatewayError($packet)
+    public function onDiscoGatewayError(Packet $packet)
     {
         $this->ajaxResetGatewayRooms();
     }

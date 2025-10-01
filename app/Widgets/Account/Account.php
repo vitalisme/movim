@@ -11,6 +11,7 @@ use Moxl\Xec\Action\Register\Remove;
 use Moxl\Xec\Action\Register\Get;
 use Moxl\Xec\Action\Register\Set;
 use Moxl\Xec\Action\AdHoc\Get as AdHocGet;
+use Moxl\Xec\Payload\Packet;
 
 class Account extends \Movim\Widget\Base
 {
@@ -25,7 +26,7 @@ class Account extends \Movim\Widget\Base
         $this->registerEvent('register_get_errorfeaturenotimplemented', 'onRegisterError', 'configuration');
         $this->registerEvent('register_set_handle', 'onRegistered', 'configuration');
         $this->registerEvent('register_set_error', 'onRegisterError', 'configuration');
-        $this->registerEvent('omemo_SetDevicesList_handle', 'onDeviceList', 'configuration');
+        $this->registerEvent('omemo_setdeviceslist_handle', 'onDeviceList', 'configuration');
         $this->registerEvent('adhoc_get_handle', 'onAdHocList');
     }
 
@@ -34,16 +35,16 @@ class Account extends \Movim\Widget\Base
         $this->rpc('Account.refreshFingerprints');
     }
 
-    public function onAdHocList($package)
+    public function onAdHocList(Packet $packet)
     {
-        $list = $package->content;
+        $list = $packet->content;
 
         $view = $this->tpl();
         $view->assign('list', $list);
 
         $this->rpc(
             'MovimTpl.fill',
-            '#gateway_' . cleanupId($package->from),
+            '#gateway_' . cleanupId($packet->from),
             $view->draw('_account_gateway_adhoc_list')
         );
     }
@@ -69,9 +70,9 @@ class Account extends \Movim\Widget\Base
         Toast::send($this->__('client.registered'));
     }
 
-    public function onRegister($package)
+    public function onRegister(Packet $packet)
     {
-        $content = $package->content;
+        $content = $packet->content;
 
         $view = $this->tpl();
 
@@ -80,7 +81,7 @@ class Account extends \Movim\Widget\Base
             $form = $xml->getHTML($content->x);
 
             $view->assign('form', $form);
-            $view->assign('from', $package->from);
+            $view->assign('from', $packet->from);
             $view->assign('attributes', $content->attributes());
             $view->assign('actions', null);
             if (isset($content->actions)) {
@@ -91,7 +92,7 @@ class Account extends \Movim\Widget\Base
         }
     }
 
-    public function onRegisterError($packet)
+    public function onRegisterError(Packet $packet)
     {
         Toast::send(
             $packet->content ??

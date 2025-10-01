@@ -8,6 +8,7 @@ use App\Widgets\Toast\Toast;
 use Movim\Widget\Base;
 use Moxl\Xec\Action\Pubsub\GetItem;
 use Moxl\Xec\Action\Pubsub\PostPublish;
+use Moxl\Xec\Payload\Packet;
 
 class PublishStories extends Base
 {
@@ -19,7 +20,7 @@ class PublishStories extends Base
         $this->addcss('publishstories.css');
     }
 
-    public function onPublish($packet)
+    public function onPublish(Packet $packet)
     {
         Toast::send($this->__('story.published'));
 
