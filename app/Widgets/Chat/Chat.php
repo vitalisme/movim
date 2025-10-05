@@ -9,7 +9,6 @@ use Moxl\Xec\Action\Muc\GetConfig;
 use Moxl\Xec\Action\Muc\SetConfig;
 
 use App\Contact;
-use App\MAMEarliest;
 use App\Message;
 use App\MessageFile;
 use App\MessageOmemoHeader;
@@ -244,10 +243,9 @@ class Chat extends \Movim\Widget\Base
                             ? "🔒 " . substr($message->omemoheader['payload'], 0, strlen($message->omemoheader['payload']) / 2)
                             : $rawbody,
                         $contact->getPicture(),
-                        6,
-                        $this->route('chat', $contact->jid),
-                        null,
-                        'Search.chat(\'' . echapJS($contact->jid) . '\', ' . ($message->isMuc() ? 'true' : 'false') . ')'
+                        time: 6,
+                        action: $this->route('chat', $contact->jid),
+                        execute: 'Search.chat(\'' . echapJS($contact->jid) . '\', ' . ($message->isMuc() ? 'true' : 'false') . ')'
                     );
                 }
             }
@@ -268,8 +266,8 @@ class Chat extends \Movim\Widget\Base
                         : $from,
                     $message->resource . ': ' . $rawbody,
                     $conference->getPicture(),
-                    4,
-                    $this->route('chat', [$contact->jid, 'room'])
+                    time: 4,
+                    action: $this->route('chat', [$contact->jid, 'room'])
                 );
             } elseif ($message->isMuc()) {
                 if ($conference && $conference->notify == 0) {
@@ -1284,7 +1282,7 @@ class Chat extends \Movim\Widget\Base
 
         // Do we need to query MAM?
         if ($messages->isEmpty()) {
-            $earliest = MAMEarliest::query();
+            $earliest = $this->me->MAMEarliests();
             $earliest = $muc ? $earliest->where('to', $jid)
                 : $earliest->where('jid', $jid);
 
@@ -1292,7 +1290,7 @@ class Chat extends \Movim\Widget\Base
                 $this->rpc('Chat.getHistory', true);
             }
         } elseif ($messages->count() < $this->_pagination) {
-            $earliest = MAMEarliest::query();
+            $earliest = $this->me->MAMEarliests();
             $earliest = $muc ? $earliest->where('to', $jid)
                 : $earliest->where('jid', $jid);
             $me = $earliest->first();
