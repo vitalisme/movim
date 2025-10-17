@@ -21,7 +21,6 @@ use App\Widgets\Dictaphone\Dictaphone;
 use App\Widgets\Notif\Notif;
 use App\Widgets\Post\Post;
 use App\Widgets\Rooms\Rooms;
-use App\Widgets\Toast\Toast;
 use Carbon\Carbon;
 use Moxl\Xec\Action\BOB\Request;
 use Moxl\Xec\Action\Disco\Request as DiscoRequest;
@@ -31,7 +30,6 @@ use Illuminate\Database\Capsule\Manager as DB;
 use Movim\ChatStates;
 use Movim\ChatOwnState;
 use Movim\CurrentCall;
-use Movim\EmbedLight;
 use Movim\Image;
 use Movim\XMPPUri;
 use Movim\Librairies\XMPPtoForm;
@@ -164,7 +162,7 @@ class Chat extends \Movim\Widget\Base
 
     public function onPublishError(Packet $packet)
     {
-        Toast::send(
+        $this->toast(
             $packet->content ??
                 $this->__('chat.publish_error')
         );
@@ -339,7 +337,7 @@ class Chat extends \Movim\Widget\Base
 
     public function onRoomConfigError(Packet $packet)
     {
-        Toast::send($packet->content);
+        $this->toast($packet->content);
     }
 
     public function onRoomConfig(Packet $packet)
@@ -363,7 +361,7 @@ class Chat extends \Movim\Widget\Base
         $r->setTo($packet->content)
             ->request();
 
-        Toast::send($this->__('chatroom.config_saved'));
+        $this->toast($this->__('chatroom.config_saved'));
     }
 
     public function ajaxInit()
@@ -517,14 +515,10 @@ class Chat extends \Movim\Widget\Base
 
             if (!$valid) $messageFile = null;
         } else {
-            try {
-                $url = new Url;
-                $cache = $url->resolve(trim($message), now: true);
+            $url = Url::resolve(trim($message), now: true);
 
-                if ($cache && $url->file !== null) {
-                    $messageFile = $url->file;
-                }
-            } catch (\Exception $e) {
+            if ($url && $url->messageFile !== null) {
+                $messageFile = $url->messageFile;
             }
         }
 
@@ -747,7 +741,7 @@ class Chat extends \Movim\Widget\Base
 
             $m = $m->fresh();
 
-            if ($file) {
+            if ($file && $file->type != 'xmpp/uri') {
                 $file->message_mid = $m->mid;
                 $file->save();
 
@@ -1432,7 +1426,7 @@ class Chat extends \Movim\Widget\Base
             $message->resolvedUrl && !$message->file
             && !$message->card && !$message->sticker
         ) {
-            $resolved = $message->resolvedUrl->cache;
+            $resolved = $message->resolvedUrl;
             if ($resolved) {
                 $message->card =  $this->prepareEmbed($resolved);
             }
@@ -1665,10 +1659,10 @@ class Chat extends \Movim\Widget\Base
         return $this->_wrapper;
     }
 
-    public function prepareEmbed(EmbedLight $embed, ?Message $message = null)
+    public function prepareEmbed(Url $url, ?Message $message = null)
     {
         $tpl = $this->tpl();
-        $tpl->assign('embed', $embed);
+        $tpl->assign('url', $url);
         $tpl->assign('message', $message);
         return $tpl->draw('_chat_embed');
     }

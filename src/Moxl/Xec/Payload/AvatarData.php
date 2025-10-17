@@ -2,7 +2,8 @@
 
 namespace Moxl\Xec\Payload;
 
-use Movim\Image;
+use Moxl\Stanza\Avatar;
+use React\Http\Message\Response;
 
 class AvatarData extends Payload
 {
@@ -10,12 +11,15 @@ class AvatarData extends Payload
     {
         $jid = baseJid((string)$parent->attributes()->from);
 
-        $p = new Image;
-        $p->fromBase((string)$stanza->items->item->data);
-        $p->setKey($jid);
-        $p->save();
-
-        $this->pack($jid);
-        $this->event('vcard');
+        requestAvatarBase64(
+            jid: $jid,
+            base64: (string)$stanza->items->item->data,
+            type: Avatar::NODE_DATA
+        )->then(
+            function (Response $response) use ($jid) {
+                $this->pack($jid);
+                $this->event('vcard');
+            }
+        );
     }
 }

@@ -50,7 +50,10 @@
 <footer>
     <ul id="upload_progress" class="list">
         <li>
-            <span class="primary icon">
+            <span class="primary icon compress">
+                <i class="material-symbols"></i>
+            </span>
+            <span class="primary icon upload">
                 <i class="material-symbols"></i>
             </span>
             <div>
@@ -61,7 +64,7 @@
     <button onclick="Dialog_ajaxClear(); Upload.abort();" class="button flat">
         {$c->__('button.close')}
     </button>
-    <button id="upload_button" onclick="Upload.init();" class="button flat disabled">
+    <button id="upload_button" onclick="Upload.init();" class="button color disabled">
         {$c->__('button.upload')}
     </button>
 </footer>

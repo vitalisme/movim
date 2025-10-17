@@ -1,5 +1,6 @@
 <?php
 
+use App\Workers\AvatarHandler\AvatarHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
 use Monolog\Handler\SyslogHandler;
@@ -8,6 +9,7 @@ use Movim\Image;
 use Movim\ImageSize;
 use Moxl\Xec\Payload\Packet;
 use React\Http\Message\Response;
+use React\Http\Message\Uri;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 
@@ -729,6 +731,58 @@ function requestResolverWorker(string $url, int $timeout = 30): PromiseInterface
 }
 
 /**
+ * @desc Handle an Avatar to the AvatarHandler
+ */
+function requestAvatarUrl(
+    string $jid,
+    string $url,
+    ?string $node = null,
+    ?bool $banner = false
+): PromiseInterface {
+    $connector = new React\Socket\FixedUriConnector(
+        'unix://' . AVATAR_HANDLER_SOCKET,
+        new React\Socket\UnixConnector()
+    );
+
+    $browser = new React\Http\Browser($connector);
+    $data = [
+        'url' => $url,
+        'jid' => $jid,
+        'node' => $node,
+        'banner' => $banner
+    ];
+
+    return $browser
+        ->withTimeout(10)
+        ->post('http://avatarhandler/url', [], json_encode($data));
+}
+
+function requestAvatarBase64(
+    string $jid,
+    string $base64,
+    string $type
+): PromiseInterface {
+    $connector = new React\Socket\FixedUriConnector(
+        'unix://' . AVATAR_HANDLER_SOCKET,
+        new React\Socket\UnixConnector()
+    );
+
+    $browser = new React\Http\Browser($connector);
+    $data = [
+        'jid' => $jid,
+        'type' => $type
+    ];
+
+    $path = AvatarHandler::getAvatarCachePath($jid, $type);
+    file_put_contents($path, base64_decode($base64));
+
+    return $browser
+        ->withTimeout(10)
+        ->post('http://avatarhandler/base64', [], json_encode($data))
+        ->always(fn() => unlink($path));
+}
+
+/**
  * @desc Send a Push through the Pusher worker
  */
 function requestPusher(
@@ -788,12 +842,8 @@ function requestTemplaterWorker(string $widget, string $method, ?Packet $data = 
 /*
  * @desc Request a simple url
  */
-function requestURL(string $url, int $timeout = 10, bool $json = false, array $headers = []): ?string
+function requestURL(string $url, int $timeout = 10, array $headers = []): PromiseInterface
 {
-    if ($json) {
-        array_push($headers, 'Accept: application/json');
-    }
-
     $connector = null;
 
     // Disable SSL if the host requested is the local one
@@ -811,20 +861,16 @@ function requestURL(string $url, int $timeout = 10, bool $json = false, array $h
         ->withHeader('User-Agent', DEFAULT_HTTP_USER_AGENT)
         ->withFollowRedirects(true);
 
-    try {
-        $response = await($browser->get($url, $headers));
-        // response successfully received
-        return (string)$response->getBody();
-    } catch (Exception $e) {
-        return null;
-    }
+    return $browser->get($url, $headers);
 }
 
 /**
  * Request the internal API
  */
-function requestAPI(string $action, int $timeout = 2, ?array $post = null): string|false
+function requestAPI(string $action, int $timeout = 2, ?array $post = null, ?bool $await = true): string|false
 {
+    if (!file_exists(API_SOCKET)) return false;
+
     $browser = (new React\Http\Browser(
         new React\Socket\FixedUriConnector(
             API_SOCKET,
@@ -837,16 +883,29 @@ function requestAPI(string $action, int $timeout = 2, ?array $post = null): stri
     $url = 'http:/' . $action;
 
     try {
-        $response = await(
-            $post
-                ? $browser->post($url, body: http_build_query($post))
-                : $browser->get($url)
-        );
+        $query = $post
+            ? $browser->post($url, body: http_build_query($post))
+            : $browser->get($url);
 
-        return (string)$response->getBody();
+        if ($await) {
+            $response = await($query);
+            return (string)$response->getBody();
+        };
+
+        return false;
     } catch (Exception $e) {
         return false;
     }
+}
+
+/**
+ * Get the motification time of the API socket file
+ */
+function socketAPITime(): int
+{
+    if (!file_exists(API_SOCKET)) return 0;
+
+    return filemtime(API_SOCKET);
 }
 
 /**

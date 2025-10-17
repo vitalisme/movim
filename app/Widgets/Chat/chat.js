@@ -876,7 +876,7 @@ var Chat = {
         });
 
         document.querySelectorAll('#chat_widget li div.bubble.file > div.message').forEach(message => {
-            if (card = message.querySelector('ul.list.card > li > div')) {
+            if (card = message.querySelector('ul.list.card > li:not(.ticket) > div')) {
                 card.onclick = function (e) {
                     ChatActions_ajaxShowMessageDialog(message.dataset.mid);
                 };
@@ -994,7 +994,7 @@ var Chat = {
     },
     appendMessage: function (idjidtime, data, prepend) {
         if (data.body === null) return;
-
+console.log(data);
         var bubble = null,
             mergeMsg = false,
             msgStack,
@@ -1710,24 +1710,27 @@ MovimEvents.registerWindow('resize', 'chat', () => Chat.scrollRestore());
 MovimEvents.registerWindow('loaded', 'chat', () => {
     if (MovimUtils.isMobile()) Chat.touchEvents();
 
-    Upload.initiate((file) => {
-        if (MovimUtils.urlParts().page == 'chat'
-            && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
-            Upload.prependName = 'chat';
-        }
-    });
+    if (typeof Upload != 'undefined') {
+        Upload.initiate((file) => {
+            if (MovimUtils.urlParts().page == 'chat'
+                && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
+                Upload.prependName = 'chat';
+            }
+        });
 
-    Upload.attach((file) => {
-        if (MovimUtils.urlParts().page == 'chat'
-            && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
-            Chat_ajaxHttpDaemonSendMessage(
-                Chat.getTextarea().dataset.jid,
-                false,
-                Boolean(Chat.getTextarea().dataset.muc),
-                file
-            );
-        }
-    });
+        Upload.attach((file) => {
+            if (MovimUtils.urlParts().page == 'chat'
+                && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
+                Chat_ajaxHttpDaemonSendMessage(
+                    Chat.getTextarea().dataset.jid,
+                    false,
+                    Boolean(Chat.getTextarea().dataset.muc),
+                    file
+                );
+            }
+        });
+    }
+
 
     // Really early panel showing in case we have a JID
     var parts = MovimUtils.urlParts();

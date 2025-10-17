@@ -7,11 +7,11 @@ gc_enable();
 use Movim\Bootstrap;
 use Movim\RPC;
 use Movim\Session;
-use Movim\Scheduler;
 use React\Promise\Timer;
 
 use App\PresenceBuffer;
 use Movim\Widget\Wrapper;
+use Movim\Scheduler;
 
 $loop = React\EventLoop\Loop::get();
 

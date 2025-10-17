@@ -5,6 +5,7 @@ namespace App\Widgets\CommunityData;
 use Moxl\Xec\Action\Pubsub\GetItem;
 
 use Movim\Widget\Base;
+use Moxl\Stanza\Avatar;
 use Moxl\Xec\Payload\Packet;
 
 class CommunityData extends Base
@@ -14,7 +15,7 @@ class CommunityData extends Base
         $this->addcss('communitydata.css');
         $this->addjs('communitydata.js');
         $this->registerEvent('disco_request_handle', 'onDiscoRequest', 'community');
-        $this->registerEvent('pubsub_getitem_avatar', 'tonAvatar', 'community');
+        $this->registerEvent('pubsub_getitem_avatar', 'onAvatar', 'community');
     }
 
     public function onDiscoRequest(Packet $packet)
@@ -26,7 +27,7 @@ class CommunityData extends Base
         }
     }
 
-    public function tonAvatar(Packet $packet)
+    public function onAvatar(Packet $packet)
     {
         list($origin, $node) = array_values($packet->content);
 
@@ -38,7 +39,7 @@ class CommunityData extends Base
         $g = new GetItem;
         $g->setTo($origin)
             ->setNode($node)
-            ->setId('urn:xmpp:avatar:metadata')
+            ->setId(Avatar::NODE_METADATA)
             ->request();
     }
 

@@ -4,7 +4,6 @@ namespace App\Widgets\PublishStories;
 
 use App\Post;
 use App\Upload;
-use App\Widgets\Toast\Toast;
 use Movim\Widget\Base;
 use Moxl\Xec\Action\Pubsub\GetItem;
 use Moxl\Xec\Action\Pubsub\PostPublish;
@@ -16,13 +15,15 @@ class PublishStories extends Base
     {
         $this->registerEvent('pubsub_postpublish_handle', 'onPublish');
 
-        $this->addjs('publishstories.js');
-        $this->addcss('publishstories.css');
+        if ($this->me->hasUpload()) {
+            $this->addjs('publishstories.js');
+            $this->addcss('publishstories.css');
+        }
     }
 
     public function onPublish(Packet $packet)
     {
-        Toast::send($this->__('story.published'));
+        $this->toast($this->__('story.published'));
 
         list($to, $node, $id, $repost, $comments) = array_values($packet->content);
 
@@ -31,9 +32,9 @@ class PublishStories extends Base
             if (!Post::where('server', $to)->where('node', $node)->where('nodeid', $id)->exists()) {
                 $gi = new GetItem;
                 $gi->setTo($to)
-                   ->setNode($node)
-                   ->setId($id)
-                   ->request();
+                    ->setNode($node)
+                    ->setId($id)
+                    ->request();
             }
 
             $this->rpc('MovimUtils.reload', $this->route('chat'));
@@ -49,7 +50,7 @@ class PublishStories extends Base
 
     public function ajaxNoTitle()
     {
-        Toast::send($this->__('publish.no_title'));
+        $this->toast($this->__('publish.no_title'));
     }
 
     public function ajaxPublish($form, string $uploadId)
@@ -64,13 +65,13 @@ class PublishStories extends Base
 
         $publish = new PostPublish;
         $publish->setTo($this->me->id)
-                ->setNode(Post::STORIES_NODE)
-                ->setId(generateUUID())
-                ->setFrom($this->me->id)
-                ->setTitle($form->title->value)
-                ->addImage($upload->geturl, 'story', 'image/jpeg')
-                ->setTags(getHashtags(htmlspecialchars($form->title->value)))
-                ->request();
+            ->setNode(Post::STORIES_NODE)
+            ->setId(generateUUID())
+            ->setFrom($this->me->id)
+            ->setTitle($form->title->value)
+            ->addImage($upload->geturl, 'story', 'image/jpeg')
+            ->setTags(getHashtags(htmlspecialchars($form->title->value)))
+            ->request();
     }
 
     public function display()

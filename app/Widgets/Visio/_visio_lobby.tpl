@@ -111,15 +111,15 @@
                 {$c->__('button.call')}
             </button>
         {else}
-            <button onclick="Visio_ajaxReject('{$contact->id|echapJS}', '{$id}'); MovimVisio.clear(); Dialog_ajaxClear()" class="button color red">
+            <button onclick="Visio_ajaxReject('{$fullJid|echapJS}', '{$id}'); MovimVisio.clear(); Dialog_ajaxClear()" class="button color red">
                 <i class="material-symbols">call_end</i>
                 {$c->__('button.refuse')}
             </button>
             <button id="lobby_start" onclick="MovimVisio.init('{$fullJid|echapJS}', '{$contact->id}', '{$id}', {if="$withvideo"}true{else}false{/if}); Dialog_ajaxClear();" class="button color green disabled">
                 {if="$withvideo"}
-                    <i class="material-symbols">videocam</i>
+                    <i class="material-symbols shake">videocam</i>
                 {else}
-                    <i class="material-symbols">call</i>
+                    <i class="material-symbols shake">call</i>
                 {/if}
                 {$c->__('button.reply')}
             </button>
@@ -143,9 +143,9 @@
             </button>
             <button id="lobby_start" onclick="Visio_ajaxMujiAccept('{$id|echapJS}'); Dialog_ajaxClear()" class="button color green disabled">
                 {if="$withvideo"}
-                    <i class="material-symbols">videocam</i>
+                    <i class="material-symbols shake">videocam</i>
                 {else}
-                    <i class="material-symbols">call</i>
+                    <i class="material-symbols shake">call</i>
                 {/if}
                 {$c->__('button.join')}
             </button>

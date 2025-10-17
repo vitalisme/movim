@@ -2,7 +2,6 @@
 
 namespace App\Widgets\Preview;
 
-use App\Widgets\Toast\Toast;
 use Movim\Widget\Base;
 
 use Respect\Validation\Validator;
@@ -24,12 +23,12 @@ class Preview extends Base
         $view = $this->tpl();
 
         try {
-            $view->assign('embed', (new \App\Url)->resolve($url));
+            $view->assign('url', \App\Url::resolve($url));
         } catch (\Exception $e) {
             error_log($e->getMessage());
         }
 
-        $view->assign('url', $url);
+        $view->assign('raw_url', $url);
         $view->assign('messageid', $messageId);
 
         $this->rpc('Preview.fill', $view->draw('_preview'));
@@ -43,7 +42,7 @@ class Preview extends Base
 
         $view = $this->tpl();
         try {
-            $view->assign('embed', (new \App\Url)->resolve($url));
+            $view->assign('url', \App\Url::resolve($url));
         } catch (\Exception $e) {
             error_log($e->getMessage());
         }
@@ -59,6 +58,6 @@ class Preview extends Base
 
     public function ajaxCopyNotify()
     {
-        Toast::send($this->__('preview.link_copied'));
+        $this->toast($this->__('preview.link_copied'));
     }
 }

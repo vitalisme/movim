@@ -6,7 +6,6 @@ use App\Message;
 use App\Widgets\Dialog\Dialog;
 use App\Widgets\Notif\Notif;
 use App\Widgets\Rooms\Rooms;
-use App\Widgets\Toast\Toast;
 
 use Movim\CurrentCall;
 use Movim\ImageSize;
@@ -22,6 +21,7 @@ use Moxl\Xec\Action\Jingle\MessageProceed;
 use Moxl\Xec\Action\Jingle\MessagePropose;
 use Moxl\Xec\Action\Jingle\MessageReject;
 use Moxl\Xec\Action\Jingle\MessageRetract;
+use Moxl\Xec\Action\Jingle\MessageRinging;
 use Moxl\Xec\Action\Jingle\SessionInitiate;
 use Moxl\Xec\Action\Jingle\SessionMute;
 use Moxl\Xec\Action\Jingle\SessionTerminate;
@@ -182,6 +182,11 @@ class Visio extends Base
 
         Wrapper::getInstance()->iterate('jingle_message', (new Packet)->pack($message));
 
+        $ringing = new MessageRinging;
+        $ringing->setTo($packet->from)
+                ->setId($packet->content['id'])
+                ->request();
+
         $this->ajaxGetLobby($packet->from, false, $packet->content['withVideo'], $packet->content['id']);
     }
 
@@ -229,8 +234,9 @@ class Visio extends Base
         $this->rpc('Notif.incomingCallAnswer');
         (new Dialog)->ajaxClear();
 
-        Toast::send($this->__('visio.ended'));
+        $this->toast($this->__('visio.ended'));
 
+        $this->rpc('MovimVisio.clear');
         $this->rpc('MovimJingles.onTerminate', \baseJid($packet->from));
     }
 
@@ -566,7 +572,7 @@ class Visio extends Base
         $mujiService = $this->me->session->getMujiService();
 
         if (!$mujiService) {
-            Toast::send($this->__('muji.cannot_create'));
+            $this->toast($this->__('muji.cannot_create'));
             return;
         }
 
@@ -746,7 +752,7 @@ class Visio extends Base
             Wrapper::getInstance()->iterate('jingle_message', (new Packet)->pack($message));
         }
 
-        Toast::send($this->__('visio.ended'));
+        $this->toast($this->__('visio.ended'));
         $this->rpc('MovimJingles.terminateAll', $reason);
     }
 

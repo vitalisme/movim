@@ -3,7 +3,6 @@
 namespace App\Widgets\Upload;
 
 use App\Widgets\Dialog\Dialog;
-use App\Widgets\Toast\Toast;
 use Movim\Widget\Base;
 
 use Moxl\Xec\Action\Upload\Request;
@@ -44,22 +43,22 @@ class Upload extends Base
 
     public function onError()
     {
-        Toast::send($this->__('upload.error_failed'));
+        $this->toast($this->__('upload.error_failed'));
     }
 
     public function onErrorFileTooLarge()
     {
-        Toast::send($this->__('upload.error_filesize'));
+        $this->toast($this->__('upload.error_filesize'));
     }
 
     public function onErrorResourceConstraint()
     {
-        Toast::send($this->__('upload.error_resource_constraint'));
+        $this->toast($this->__('upload.error_resource_constraint'));
     }
 
     public function onErrorNotAllowed()
     {
-        Toast::send($this->__('upload.error_not_allowed'));
+        $this->toast($this->__('upload.error_not_allowed'));
     }
 
     public function ajaxGetPanel()
@@ -70,11 +69,25 @@ class Upload extends Base
         $this->rpc('Upload.attachEvents');
     }
 
+    /**
+     * Internal functions called by UploadFile announce the XMPP file upload
+     */
+
+    public function ajaxHttpUploadXMPP(string $file)
+    {
+        $this->rpc('Upload.setProgress', 'cloud_upload', $this->__('upload.upload_xmpp'));
+    }
+
+    public function ajaxHttpProgressXMPP(int $percentage)
+    {
+        $this->rpc('Upload.setProgress', 'cloud_upload', $percentage . '% - ' . $this->__('upload.upload_xmpp'));
+    }
+
     public function ajaxPrepare($file)
     {
         $uploadService = $this->me->session->getUploadService();
 
-        if($uploadService) {
+        if ($uploadService) {
             $upload = \App\Upload::firstOrCreate([
                 'id' => generateUUID(),
                 'user_id' => $this->me->id,
@@ -86,11 +99,11 @@ class Upload extends Base
 
             $r = new Request;
             $r->setTo($uploadService->server)
-              ->setName($file->name)
-              ->setSize($file->size)
-              ->setType($file->type)
-              ->setId($upload->id)
-              ->request();
+                ->setName($file->name)
+                ->setSize($file->size)
+                ->setType($file->type)
+                ->setId($upload->id)
+                ->request();
         }
     }
 
@@ -101,15 +114,15 @@ class Upload extends Base
         if ($upload) {
             $r = new Request;
             $r->setTo($upload->server)
-              ->setName($file->name)
-              ->setSize($file->size)
-              ->setType($file->type)
-              ->request();
+                ->setName($file->name)
+                ->setSize($file->size)
+                ->setType($file->type)
+                ->request();
         }
     }
 
     public function ajaxFailed()
     {
-        Toast::send($this->__('upload.error_failed'));
+        $this->toast($this->__('upload.error_failed'));
     }
 }
