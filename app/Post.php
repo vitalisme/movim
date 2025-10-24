@@ -793,7 +793,7 @@ class Post extends Model
         }
     }
 
-    public function getUUID()
+    public function getUUID(): string
     {
         if (substr($this->nodeid, 10) == 'urn:uuid:') {
             return $this->nodeid;
@@ -804,7 +804,11 @@ class Post extends Model
 
     public function getRef(): string
     {
-        return 'xmpp:' . $this->server . '?;node=' . $this->node . ';item=' . $this->nodeid;
+        return 'xmpp:' . $this->server . '?;' .
+            http_build_query([
+                'node' => $this->node,
+                'item' => $this->nodeid
+            ], arg_separator: ';');
     }
 
     public function getLink(?bool $public = false): string

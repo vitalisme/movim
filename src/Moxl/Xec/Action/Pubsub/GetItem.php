@@ -5,7 +5,6 @@ namespace Moxl\Xec\Action\Pubsub;
 use Moxl\Stanza\Pubsub;
 use Moxl\Xec\Action;
 
-use Movim\Image;
 use Moxl\Stanza\Avatar;
 use Psr\Http\Message\ResponseInterface;
 
@@ -14,7 +13,7 @@ class GetItem extends Action
     protected $_to;
     protected $_node;
     protected $_id;
-    protected $_askreply;
+    protected ?int $_replypostid = null;
 
     protected $_manual = false; // Use when we explicitely request an item
     protected $_parentid;
@@ -54,22 +53,23 @@ class GetItem extends Action
 
                     if ($p->isComment() && !isset($p->parent_id)) {
                         return;
-                    }
+                    };
 
                     $p->save();
 
-                    if (!$this->_manual) {
-                        if (is_array($this->_askreply)) {
-                            $this->pack(\App\Post::find($this->_askreply));
-                            $this->deliver();
-                        } else {
-                            $this->pack($p->id);
-                            $this->event('post');
-                        }
+                    if ($this->_replypostid != null) {
+                        $this->pack($this->_replypostid);
+                        $this->deliver();
+                    } elseif ($p->isStory()) {
+                        $this->pack($p->id);
+                        $this->event('story');
+                    } elseif ($p->isComment()) {
+                        $this->pack($p->id);
+                        $this->event('post_comment_published');
+                    } else {
+                        $this->pack($p->id);
+                        $this->event('post');
                     }
-
-                    $this->pack($p->id);
-                    $this->deliver();
 
                     if ($this->_messagemid) {
                         $message = me()->messages()->where('mid', $this->_messagemid)->first();
