@@ -4,8 +4,8 @@
 }
 
 .flex.card {
-    gap: 0 1rem;
-    padding: 0 1.5rem;
+    gap: 1rem;
+    padding: 1rem;
 }
 
 ul.flex li.block {

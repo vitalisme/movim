@@ -12,6 +12,11 @@
     opacity: 0.1;
 }
 
+.card:not(.flex) li:not(.subheader),
+.card:not(.flex) > div.block {
+    margin-bottom: 1rem;
+}
+
 .card img.main {
     filter: blur(0.4rem);
 }
@@ -38,7 +43,6 @@
     border-radius: 1rem;
     border: 1px solid;
     overflow: hidden;
-    margin-bottom: 1rem;
     box-sizing: border-box;
 }
 
