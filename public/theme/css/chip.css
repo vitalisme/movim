@@ -29,9 +29,19 @@
     font-size: 2rem;
 }
 
+.chip i.spin,
+.chip i.on_mobile {
+    margin: 0;
+}
+
 *[dir="rtl"] .chip i {
     margin-left: 0;
     margin-right: -1rem;
+}
+
+
+.chip.oppose {
+    float: right;
 }
 
 .chip.active:hover {

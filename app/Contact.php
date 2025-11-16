@@ -8,7 +8,6 @@ use Illuminate\Database\Capsule\Manager as DB;
 use Respect\Validation\Validator;
 use Movim\Image;
 use Movim\ImageSize;
-use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 
 class Contact extends Model
@@ -359,7 +358,7 @@ class Contact extends Model
     public function getSyndicationUrl()
     {
         return \Movim\Route::urlize(
-            'blog',
+            'feed',
             ($this->user && isset($this->user->nickname))
                 ? $this->user->nickname
                 : $this->id

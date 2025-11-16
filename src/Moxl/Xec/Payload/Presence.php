@@ -52,8 +52,6 @@ class Presence extends Payload
                 }
 
                 if ($presence->muc) {
-                    ChatroomPings::getInstance()->touch($presence->jid);
-
                     if ($presence->mucjid == me()->id) {
                         // Spectrum2 specific bug, we can receive two self-presences, one with several caps items
                         $cCount = 0;
@@ -70,7 +68,6 @@ class Presence extends Payload
 
                         if ($presence->value != 5 && $presence->value != 6) {
                             $this->method('muc_handle');
-                            $this->pack([$presence, false]);
                         }
 
                         /**
@@ -87,18 +84,18 @@ class Presence extends Payload
                             $stanza->addAttribute('id', $session->get(Muc::$mucId . (string)$stanza->attributes()->from));
                             Handler::handle($stanza);
                         }
-
-                        $this->deliver();
                     }
-                } else {
-                    $this->pack($presence->roster);
-
-                    if ($presence->value == 5 && !empty($presence->resource)) {
-                        $presence->delete();
-                    }
+                } elseif ($presence->value == 5 && !empty($presence->resource)) {
+                    $presence->delete();
                 }
 
-                $this->deliver();
+                /**
+                 * Don't handle for MUC presences before we are fully authenticated
+                 */
+                if (!$presence->muc || ChatroomPings::getInstance()->has($presence->jid)) {
+                    $this->pack($presence);
+                    $this->deliver();
+                }
             });
         }
     }

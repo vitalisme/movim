@@ -8,7 +8,15 @@ var MovimJingleSession = function (jid, fullJid, id, name, avatarUrl) {
     this.audioLevel = 0;
     this.lastPostMessage = 0;
 
-    this.pc = new RTCPeerConnection({ 'iceServers': MovimVisio.services });
+    this.pc = new RTCPeerConnection({
+        iceServers: MovimVisio.services,
+        bundlePolicy: 'max-bundle',
+        iceCandidatePoolSize: 10
+    });
+
+    this.adaptToNetworkCondition = setInterval(() => {
+        VisioUtils.adaptToNetworkCondition(this.pc);
+    }, 5000);
 
     this.participant = document.createElement('div');
     this.participant.dataset.jid = this.jid;
@@ -71,7 +79,7 @@ var MovimJingleSession = function (jid, fullJid, id, name, avatarUrl) {
             this.tracksTypes['mid' + event.transceiver.mid] = 'audio';
 
             this.handleRemoteAudio();
-        } else if (event.track.kind == 'video') {
+        } else if (event.track.kind === 'video') {
             if (this.remoteVideo.srcObject && this.remoteVideo.srcObject.id != srcObject.id) {
                 this.remoteScreenVideo.srcObject = srcObject;
                 this.tracksTypes['mid' + event.transceiver.mid] = 'screen';
@@ -89,6 +97,12 @@ var MovimJingleSession = function (jid, fullJid, id, name, avatarUrl) {
     this.pc.onnegotiationneeded = event => {
         if (this.pc.localDescription) {
             this.oldLocalDescription = this.pc.localDescription.sdp;
+
+            this.pc.getTransceivers().forEach(transceiver => {
+                if (transceiver.sender.track.kind === 'video') {
+                    VisioUtils.setVideoCodecPreferences(transceiver);
+                }
+            });
 
             this.pc.createOffer()
                 .then((offer) => this.pc.setLocalDescription(offer))
@@ -172,6 +186,8 @@ MovimJingleSession.prototype.terminate = function (reason) {
 }
 
 MovimJingleSession.prototype.close = function () {
+    clearInterval(this.adaptToNetworkCondition);
+
     if (this.pc) {
         this.pc.close();
         this.pc = null;
@@ -257,6 +273,11 @@ MovimJingleSession.prototype.onContentRemove = function (sdp, mid) {
 MovimJingleSession.prototype.sessionInitiate = function (fullJid, id, mujiRoom) {
     this.id = id;
     this.fullJid = fullJid;
+
+    VisioUtils.setVideoCodecPreferences(
+        this.pc.getTransceivers().find(transceiver => transceiver.sender.track.kind == 'video')
+    );
+
     this.pc.createOffer()
         .then(offer => this.pc.setLocalDescription(offer))
         .then(() => Visio_ajaxSessionInitiate(this.fullJid, this.pc.localDescription, id, mujiRoom));

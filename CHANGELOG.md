@@ -1,7 +1,10 @@
 Movim Changelog
 ================
 
-v0.32 (master)
+v0.33 (master)
+---------------------------
+
+v0.32
 ---------------------------
 * Add a copy external link button on the Posts
 * Improve the Communities discovery flow when visiting a server
@@ -44,6 +47,9 @@ v0.32 (master)
 * Refactor and cleanup the Url resolving flow and remove the EmbedLight object
 * Allow multi-pick when sharing a Post with contacts
 * Cleanup and refactor of the Posts and Stories events handling
+* Move from a Presence based to a Follow based subscription system for the Blogs
+* Introduce the nav bar in the Chat desktop
+* WebRTC video-streams optimizations
 
 v0.31
 ---------------------------

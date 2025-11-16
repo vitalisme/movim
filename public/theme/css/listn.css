@@ -9,13 +9,26 @@ ul.list>li {
     transition: background-color 0.15s ease;
 }
 
-ul.list.compact>li {
+ul.list:not(.divided)>li {
+    border-radius: 1rem;
+}
+
+ul.list.compact>li:not(.subheader) {
     flex-direction: column;
     align-items: flex-start;
     padding: 1.5rem 1rem;
 }
 
-nav>ul.list>li,
+ul.list.compact>li>div {
+    width: 100%;
+}
+
+ul.list.compact>li>span.chip {
+    position: absolute;
+    right: 1rem;
+    top: 2rem;
+}
+
 ul.list.controls>li {
     padding: 0;
 }
@@ -62,7 +75,8 @@ ul.tabs>li:hover {
 ul.list.active>li:hover:not(.subheader):not(.color),
 ul.list.active.all>li:hover:not(.color),
 ul.list>li.active:hover:not(.color),
-ul.list.active>li.active:not(.subheader):not(.color) {
+ul.list.active>li.active:not(.subheader):not(.color),
+ul.tabs>li:hover {
     background-color: rgba(var(--movim-element-action), 0.1);
 }
 
@@ -568,6 +582,10 @@ ul.list li>div.bubble>div>p:empty {
 
 ul.list li>div.bubble:not(.file) p {
     margin-right: 1rem;
+}
+
+ul.list li>div.bubble:not(.file) p:has(i.icon) {
+    white-space: inherit;
 }
 
 ul.list li>div.bubble p.retracted,

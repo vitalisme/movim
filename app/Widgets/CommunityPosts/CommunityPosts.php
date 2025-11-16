@@ -52,7 +52,7 @@ class CommunityPosts extends Base
                 ->first();
 
             $this->rpc(
-                'MovimTpl.replace',
+                'MovimTpl.fill',
                 '#' . cleanupId($parent->nodeid),
                 $info && $info->isGallery()
                     ? $this->prepareTicket($parent)
@@ -88,6 +88,7 @@ class CommunityPosts extends Base
         list($origin, $node) = array_values((array)$packet->content);
 
         $view = $this->tpl();
+        $view->assign('contact', \App\Contact::firstOrNew(['id' => $origin]));
 
         $this->rpc(
             'MovimTpl.fill',
