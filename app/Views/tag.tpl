@@ -1,13 +1,14 @@
-<?php if (isLogged()) { ?>
+<?php if ($this->user) { ?>
     <?php $this->widget('Search');?>
         <?php $this->widget('Notifications');?>
     <?php $this->widget('SendTo');?>
-    <?php if(me()->hasOMEMO()) $this->widget('ChatOmemo');?>
+    <?php if($this->user?->hasOMEMO()) $this->widget('ChatOmemo');?>
 
     <?php $this->widget('PostActions');?>
 
     <nav>
         <?php $this->widget('Presence');?>
+        <?php $this->widget('Shortcuts');?>
         <?php $this->widget('Navigation');?>
     </nav>
 
@@ -15,13 +16,13 @@
 <?php } ?>
 
 <main>
-    <?php if (isLogged()) { ?>
+    <?php if ($this->user) { ?>
         <aside>
             <?php $this->widget('NewsNav');?>
         </aside>
     <?php } ?>
     <div>
-        <?php if (!isLogged()) { ?>
+        <?php if (!$this->user) { ?>
             <?php $this->widget('PublicNavigation');?>
             <hr />
         <?php } ?>

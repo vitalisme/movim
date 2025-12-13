@@ -4,10 +4,11 @@
 <?php $this->widget('SendTo');?>
 <?php $this->widget('ContactActions');?>
 <?php $this->widget('AdHoc');?>
-<?php if(me()->hasOMEMO()) $this->widget('ChatOmemo');?>
+<?php if($this->user?->hasOMEMO()) $this->widget('ChatOmemo');?>
 
 <nav>
     <?php $this->widget('Presence');?>
+    <?php $this->widget('Shortcuts');?>
     <?php $this->widget('Navigation');?>
 </nav>
 
@@ -19,9 +20,9 @@
     <?php $this->widget('ChatActions');?>
     <div id="scroll_block">
         <a class="button action color" onclick="Search_ajaxRequest(true)">
-            <i class="material-symbols">add</i>
+            <i class="material-symbols">chat_add_on</i>
         </a>
-        <?php if (me()->hasPubsub() && me()->hasUpload()) { ?>
+        <?php if ($this->user?->hasPubsub() && $this->user?->hasUpload()) { ?>
             <?php $this->widget('Stories');?>
         <?php } ?>
         <?php $this->widget('Chats');?>
@@ -30,12 +31,12 @@
     </div>
 </main>
 
-<?php if (me()->hasUpload()) { ?>
+<?php if ($this->user?->hasUpload()) { ?>
     <?php $this->widget('Dictaphone');?>
     <?php $this->widget('Snap');?>
     <?php $this->widget('Draw');?>
 
-    <?php if (me()->hasPubsub()) { ?>
+    <?php if ($this->user?->hasPubsub()) { ?>
         <?php $this->widget('PublishStories');?>
         <?php $this->widget('StoriesViewer');?>
     <?php } ?>

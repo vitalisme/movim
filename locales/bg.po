@@ -60,6 +60,8 @@
 #. #-#-#-#-#  locales.po (PACKAGE VERSION)  #-#-#-#-#
 #. extracted from ../app/Widgets/ContactData/locales.ini
 #. #-#-#-#-#  locales.po (PACKAGE VERSION)  #-#-#-#-#
+#. extracted from ../app/Widgets/ContactsSuggestions/locales.ini
+#. #-#-#-#-#  locales.po (PACKAGE VERSION)  #-#-#-#-#
 #. extracted from ../app/Widgets/Dictaphone/locales.ini
 #. #-#-#-#-#  locales.po (PACKAGE VERSION)  #-#-#-#-#
 #. extracted from ../app/Widgets/Draw/locales.ini
@@ -121,7 +123,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: movim\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-04 12:34+0200\n"
+"POT-Creation-Date: 2025-12-07 19:00+0200\n"
 "PO-Revision-Date: 2015-06-24 09:45+0000\n"
 "Last-Translator: Rossen Karpuzov <rkarpuzov@yahoo.com>, 2020-2023,2025\n"
 "Language-Team: Bulgarian (http://app.transifex.com/movim/movim/language/bg/)\n"
@@ -491,6 +493,16 @@ msgstr ""
 msgid "Change my profile picture"
 msgstr ""
 
+#: [avatar]too_big
+#, fuzzy
+msgid "Your picture is too big"
+msgstr "Профилът ви вече е обществен"
+
+#: [avatar]missing
+#, fuzzy
+msgid "No avatar yet"
+msgstr "Все още няма чатове... "
+
 #: [banner]change
 msgid "Change my banner"
 msgstr "Смени моя банер"
@@ -502,6 +514,11 @@ msgstr "Банерът е обновен"
 #: [banner]not_updated
 msgid "Banner Not Updated"
 msgstr "Банерът не е обновен"
+
+#: [banner]missing
+#, fuzzy
+msgid "No banner yet"
+msgstr "Все още няма новини ..."
 
 #: [blocked]title
 msgid "Blocked"
@@ -1008,7 +1025,7 @@ msgstr ""
 msgid "Error during the application of the node configuration"
 msgstr "Грешка по време на прилагането на конфигурацията на възела"
 
-#: [communityaffiliation]owners
+#: [communityaffiliation]owners [room]affiliation_owners
 msgid "Owners"
 msgstr "Собственици"
 
@@ -1089,21 +1106,21 @@ msgstr "Само издателите могат да публикуват"
 msgid "Only subscribers can publish"
 msgstr "Само абонатите могат да публикуват"
 
-#: [communityheader]subscribe
-msgid "Subscribe"
-msgstr "Абонамент"
+#: [communityheader]follow
+msgid "Follow"
+msgstr ""
 
-#: [communityheader]unsubscribe
-msgid "Unsubscribe"
-msgstr "Прекрати абонамент"
+#: [communityheader]unfollow
+msgid "Unfollow"
+msgstr ""
 
-#: [communityheader]subscribed
-msgid "Subscribed"
-msgstr "Абониран"
+#: [communityheader]followed
+msgid "Followed"
+msgstr ""
 
-#: [communityheader]unsubscribed
-msgid "Unsubscribed"
-msgstr "Разабониран"
+#: [communityheader]unfollowed
+msgid "Unfollowed"
+msgstr ""
 
 #: [communityheader]subscription_unsupported
 msgid "The subscriptions are disabled for this community"
@@ -1117,16 +1134,17 @@ msgstr "Дайте етикет за тази общност"
 msgid "My Community Name"
 msgstr "Име на моята общност"
 
-#: [communityheader]share_subscription
-msgid "Share this subscription publicly"
-msgstr "Споделете този абонамент публично"
+#: [communityheader]share_follow
+msgid "Share this follow to everyone"
+msgstr ""
 
-#: [communityheader]share_subscription_text
+#: [communityheader]share_follow_text
 msgid "It will appear on your profile"
 msgstr "То ще се появи във вашия профил"
 
-#: [communityheader]unsubscribe_text
-msgid "You are going to unsubscribe from this community"
+#: [communityheader]unfollow_text
+#, fuzzy
+msgid "You are going to unfollow this community"
 msgstr "Ще се отпишете от тази общност"
 
 #: [communityheader]sure [delete]title
@@ -1146,8 +1164,17 @@ msgid "Private account"
 msgstr "Частна сметка"
 
 #: [communityposts]presencerequired_text
-msgid "Follow it to see the content"
+msgid "Ask %s to be in your contacts to see the publications"
 msgstr ""
+
+#: [communityposts]subscribe_presencerequired
+msgid "Send an invitation request before following the contact"
+msgstr ""
+
+#: [communityposts]subscribe_unsupported
+#, fuzzy
+msgid "You can't follow the contact at the moment"
+msgstr "Можете да видите това състояние на контакт"
 
 #: [communitysubscriptions]subscriptions
 msgid "Subscribed Communities"
@@ -1503,6 +1530,10 @@ msgstr "Поканете"
 
 #: [subscription]nil_text
 msgid "This contact is in your contact list but you are not subscribed to each other"
+msgstr ""
+
+#: [contactssuggestions]for_you
+msgid "Suggestions for you"
 msgstr ""
 
 #: [dictaphone]name
@@ -2090,7 +2121,7 @@ msgstr "Моля, посочи заглавие"
 msgid "At least one picture is required"
 msgstr "Поне една картинка е необходима"
 
-#: [publish]preview
+#: [publish]preview [button]preview
 msgid "Preview"
 msgstr "Преглед"
 
@@ -2170,6 +2201,20 @@ msgstr "Още помощ"
 msgid "Markdown syntax manual"
 msgstr "Ръководство за синтаксис на Markdown"
 
+#: [story]new
+#, fuzzy
+msgid "New story"
+msgstr "Нов разказ"
+
+#: [story]new_edit
+msgid "Edit your story"
+msgstr ""
+
+#: [story]new_publish
+#, fuzzy
+msgid "Publish your story"
+msgstr "Публикуване на разказа"
+
 #: [story]to_roster
 msgid "Publish to my contacts"
 msgstr ""
@@ -2241,20 +2286,6 @@ msgstr ""
 #: [rooms]destroy_text
 msgid "Are you sure you want to permanently destroy the following chatroom?"
 msgstr ""
-
-#: [rooms]owner
-msgctxt "[rooms]owner"
-msgid "Owner"
-msgstr "Собственик"
-
-#: [rooms]admin
-msgctxt "[rooms]admin"
-msgid "Admin"
-msgstr "Админ"
-
-#: [rooms]visitor
-msgid "Visitor"
-msgstr "Посетител"
 
 #: [rooms]explore_placeholder
 msgid "Name or description"
@@ -2506,13 +2537,12 @@ msgstr "Винаги уведомявайте"
 msgid "Pinned"
 msgstr "Забоден"
 
-#: [room]affiliation_owner
-msgctxt "[room]affiliation_owner"
+#: [room]affiliation_owner [affiliation]owner
 msgid "Owner"
 msgstr "Собственик"
 
 #: [room]affiliation_admin
-msgctxt "[room]affiliation_admin"
+#, fuzzy
 msgid "Admin"
 msgstr "Админ"
 
@@ -2523,6 +2553,21 @@ msgstr "Член"
 #: [room]affiliation_none [affiliation]no-aff
 msgid "No affiliation"
 msgstr ""
+
+#: [room]affiliation_admins
+#, fuzzy
+msgid "Admins"
+msgstr "Админ"
+
+#: [room]affiliation_members
+#, fuzzy
+msgctxt "[room]affiliation_members"
+msgid "Members"
+msgstr "Членове"
+
+#: [room]visitor
+msgid "Visitor"
+msgstr "Посетител"
 
 #: [room]allowed_send_messages
 msgid "Is the user allowed to send messages?"
@@ -2605,25 +2650,24 @@ msgstr "Прикачете към публикация в блога"
 msgid "Share in a new publication"
 msgstr "Сподели в нова публикация"
 
-#: [sendto]contact
-msgid "Send it to a contact"
-msgstr "Изпратете го на контакт"
+#: [sendto]selected
+#, fuzzy
+msgid "contacts selected"
+msgstr "Контактът е изтрит"
 
-#: [sendto]chatroom
-msgid "Share it in a chatroom"
-msgstr "Споделете го в чат стая"
+#: [sendto]pick
+#, fuzzy
+msgid "Pick the contacts you want to share this content with"
+msgstr "Наистина ли искате да изтриете този коментар?"
 
 #: [sendto]shared_with
 msgid "Post shared"
 msgstr "Публикацията е споделена"
 
-#: [sendto]shared_contact
-msgid "Post shared with your contact"
+#: [sendto]shared_contacts
+#, fuzzy
+msgid "Post shared with %s contacts"
 msgstr "Споделена е статия с ваш контакт"
-
-#: [sendto]shared_chatroom
-msgid "Post shared within the chatroom"
-msgstr "Споделена е статия в чат стаята"
 
 #: [sendto]more_contacts
 msgid "More contacts"
@@ -2753,6 +2797,11 @@ msgstr "Плъзнете и пуснете файла си в тази обла�
 msgid "Max file size %s"
 msgstr "Максимум на файл е %s"
 
+#: [upload]upload_xmpp
+#, fuzzy
+msgid "Uploading to your account"
+msgstr "Изтрийте вашата сметка"
+
 #: [vcard]title [page]profile
 msgid "Profile"
 msgstr "Профил"
@@ -2881,6 +2930,15 @@ msgstr ""
 msgid "by %s"
 msgstr ""
 
+#: [visio]hang_up
+msgid "Hang up the call"
+msgstr ""
+
+#: [visio]hang_up_text
+#, fuzzy
+msgid "You are going to hang up the current call, are you sure?"
+msgstr " Ще изтриете%s съобщения, сигурни ли сте?"
+
 #: [visiolobby]called
 msgid "%s is calling you"
 msgstr ""
@@ -2926,7 +2984,7 @@ msgid "No sound detected from your microphone"
 msgstr ""
 
 #: [visiolobby]no_mic_sound2
-msgid "Try to select another source or check your system settings"
+msgid "Try make some noise, select another source or check your system settings"
 msgstr ""
 
 #: [muji]call_audio_invite
@@ -3062,29 +3120,53 @@ msgstr "Свързване със сървъра"
 msgid "Oops!"
 msgstr "Опаа!"
 
-#: [button]call
-msgid "Call"
-msgstr "Прозвъняване"
+#: [button]accept
+msgid "Accept"
+msgstr "Приемане"
+
+#: [button]add
+msgid "Add"
+msgstr "Добавете"
 
 #: [button]audio_call
 msgid "Audio Call"
 msgstr "Гласово прозвъняване"
 
-#: [button]video_call
-msgid "Video Call"
-msgstr "Видео прозвъняване"
+#: [button]bool_no
+msgid "No"
+msgstr "Не"
 
-#: [button]validate
-msgid "Validate"
+#: [button]bool_yes
+msgid "Yes"
+msgstr "Да"
+
+#: [button]call
+msgid "Call"
+msgstr "Прозвъняване"
+
+#: [button]cancel
+msgid "Cancel"
+msgstr "Отказ"
+
+#: [button]clear
+msgid "Clear"
+msgstr "Изчисти"
+
+#: [button]close
+msgid "Close"
+msgstr "Затворете"
+
+#: [button]connecting
+msgid "Connecting"
+msgstr "Свързване"
+
+#: [button]copy_link
+msgid "Copy Link"
+msgstr "Копирай връзка"
+
+#: [button]create
+msgid "Create"
 msgstr ""
-
-#: [button]refresh
-msgid "Refresh"
-msgstr "Обновяване"
-
-#: [button]add
-msgid "Add"
-msgstr "Добавете"
 
 #: [button]delete
 msgid "Delete"
@@ -3094,21 +3176,98 @@ msgstr "Изтрийте"
 msgid "Destroy"
 msgstr "Унищожете"
 
+#: [button]discover
+msgid "Discover"
+msgstr "Открий"
+
+#: [button]enable
+msgid "Enable"
+msgstr "Позволи"
+
+#: [button]join
+msgid "Join"
+msgstr ""
+
+#: [button]like
+msgid "Like"
+msgstr "Харесай"
+
+#: [button]more
+msgid "More"
+msgstr "Повече"
+
+#: [button]next
+msgid "Next"
+msgstr "Следващ"
+
+#: [button]not_now
+msgid "Not Now"
+msgstr "Не сега"
+
+#: [button]open
+msgid "Open"
+msgstr "Отвори"
+
+#: [button]previous
+msgid "Previous"
+msgstr "Предишен"
+
+#: [button]quote
+msgid "Quote"
+msgstr ""
+
+#: [button]refresh
+msgid "Refresh"
+msgstr "Обновяване"
+
+#: [button]refuse
+msgid "Refuse"
+msgstr "Отказване"
+
+#: [button]register
+msgid "Register"
+msgstr "Регистриране"
+
 #: [button]remove
 msgid "Leave"
 msgstr ""
 
-#: [button]cancel
-msgid "Cancel"
-msgstr "Отказ"
+#: [button]reply
+msgid "Reply"
+msgstr "Отговор"
 
-#: [button]close
-msgid "Close"
-msgstr "Затворете"
+#: [button]return
+msgid "Return"
+msgstr "Връщане"
 
-#: [button]create
-msgid "Create"
-msgstr ""
+#: [button]save
+msgid "Save"
+msgstr "Запазване"
+
+#: [button]search
+msgid "Search"
+msgstr "Търсене"
+
+#: [button]send_to
+msgid "Send to"
+msgstr "Изпрати до"
+
+#: [button]share
+msgctxt "[button]share"
+msgid "Share"
+msgstr "Сподели"
+
+#: [button]sign_up
+msgid "Sign Up"
+msgstr "Регистрирайте се"
+
+#: [button]submitting
+msgid "Submitting"
+msgstr "Изпращане"
+
+#: [button]unregister
+msgid "Unregister"
+msgstr "Де-регистриран"
 
 #: [button]update
 msgid "Update"
@@ -3118,110 +3277,13 @@ msgstr "Обнови"
 msgid "Updating"
 msgstr "Обновяване"
 
-#: [button]submitting
-msgid "Submitting"
-msgstr "Изпращане"
-
-#: [button]register
-msgid "Register"
-msgstr "Регистриране"
-
-#: [button]reply
-msgid "Reply"
-msgstr "Отговор"
-
-#: [button]unregister
-msgid "Unregister"
-msgstr "Де-регистриран"
-
-#: [button]save
-msgid "Save"
-msgstr "Запазване"
-
-#: [button]join
-msgid "Join"
+#: [button]validate
+msgid "Validate"
 msgstr ""
 
-#: [button]clear
-msgid "Clear"
-msgstr "Изчисти"
-
-#: [button]connecting
-msgid "Connecting"
-msgstr "Свързване"
-
-#: [button]bool_yes
-msgid "Yes"
-msgstr "Да"
-
-#: [button]bool_no
-msgid "No"
-msgstr "Не"
-
-#: [button]return
-msgid "Return"
-msgstr "Връщане"
-
-#: [button]accept
-msgid "Accept"
-msgstr "Приемане"
-
-#: [button]refuse
-msgid "Refuse"
-msgstr "Отказване"
-
-#: [button]next
-msgid "Next"
-msgstr "Следващ"
-
-#: [button]previous
-msgid "Previous"
-msgstr "Предишен"
-
-#: [button]search
-msgid "Search"
-msgstr "Търсене"
-
-#: [button]share
-msgctxt "[button]share"
-msgid "Share"
-msgstr "Сподели"
-
-#: [button]discover
-msgid "Discover"
-msgstr "Открий"
-
-#: [button]like
-msgid "Like"
-msgstr "Харесай"
-
-#: [button]not_now
-msgid "Not Now"
-msgstr "Не сега"
-
-#: [button]enable
-msgid "Enable"
-msgstr "Позволи"
-
-#: [button]sign_up
-msgid "Sign Up"
-msgstr "Регистрирайте се"
-
-#: [button]send_to
-msgid "Send to"
-msgstr "Изпрати до"
-
-#: [button]more
-msgid "More"
-msgstr "Повече"
-
-#: [button]copy_link
-msgid "Copy Link"
-msgstr "Копирай връзка"
-
-#: [button]open
-msgid "Open"
-msgstr "Отвори"
+#: [button]video_call
+msgid "Video Call"
+msgstr "Видео прозвъняване"
 
 #: [input]optional
 msgid "Optional"
@@ -3828,10 +3890,6 @@ msgstr "ГБ"
 msgid "TB"
 msgstr "ТБ"
 
-#: [affiliation]owner
-msgid "Owner"
-msgstr "Собственик"
-
 #: [affiliation]publisher
 msgid "Publisher"
 msgstr "Издател"
@@ -3851,6 +3909,42 @@ msgstr ""
 #: [field]type_here
 msgid "Type here"
 msgstr "Пиши тук"
+
+#~ msgid "Subscribe"
+#~ msgstr "Абонамент"
+
+#~ msgid "Unsubscribe"
+#~ msgstr "Прекрати абонамент"
+
+#~ msgid "Subscribed"
+#~ msgstr "Абониран"
+
+#~ msgid "Unsubscribed"
+#~ msgstr "Разабониран"
+
+#~ msgid "Share this subscription publicly"
+#~ msgstr "Споделете този абонамент публично"
+
+#~ msgctxt "[rooms]owner"
+#~ msgid "Owner"
+#~ msgstr "Собственик"
+
+#~ msgctxt "[room]affiliation_owner"
+#~ msgid "Owner"
+#~ msgstr "Собственик"
+
+#~ msgctxt "[room]affiliation_admin"
+#~ msgid "Admin"
+#~ msgstr "Админ"
+
+#~ msgid "Send it to a contact"
+#~ msgstr "Изпратете го на контакт"
+
+#~ msgid "Share it in a chatroom"
+#~ msgstr "Споделете го в чат стая"
+
+#~ msgid "Post shared within the chatroom"
+#~ msgstr "Споделена е статия в чат стаята"
 
 #~ msgctxt "[chat]clear_history"
 #~ msgid "Clear the history"

@@ -5,6 +5,7 @@
 
 <nav>
     <?php $this->widget('Presence');?>
+    <?php $this->widget('Shortcuts');?>
     <?php $this->widget('Navigation');?>
 </nav>
 
@@ -22,12 +23,12 @@
                 </li>
             </ul>
         </header>
-        <?php if (me()->hasPubsub()) { ?>
+        <?php if ($this->user?->hasPubsub()) { ?>
             <?php $this->widget('CommunitySubscriptions'); ?>
         <?php } ?>
     </div>
 </main>
 
-<?php if (me()->hasPubsub() && me()->hasUpload()) { ?>
+<?php if ($this->user?->hasPubsub() && $this->user?->hasUpload()) { ?>
     <?php $this->widget('PublishStories');?>
 <?php } ?>

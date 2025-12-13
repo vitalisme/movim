@@ -169,7 +169,7 @@ class User extends Model
         return $this->hasMany('App\Affiliation', 'jid', 'id');
     }
 
-    public static function me($reload = false): User
+    public static function me($reload = false): ?User
     {
         $session = Session::instance();
 
@@ -184,7 +184,7 @@ class User extends Model
         $me = self::find($session->get('jid'));
         self::$me = $me;
 
-        return ($me) ? $me : new User;
+        return ($me) ? $me : null;
     }
 
     public function init()
@@ -231,6 +231,19 @@ class User extends Model
     public function isRestricted(): bool
     {
         return \App\Configuration::get()->restrictsuggestions;
+    }
+
+    public function hasRegister(): bool
+    {
+        $rootInfo = Info::where('server', explodeJid($this->attributes['id'])['server'])
+            ->where('node', '')
+            ->first();
+
+        if ($rootInfo) {
+            return $rootInfo->hasFeature('jabber:iq:register');
+        }
+
+        return false;
     }
 
     public function hasMAM(): bool
@@ -297,5 +310,10 @@ class User extends Model
         }
 
         return in_array($jid, $this->userBlocked) || in_array($jid, $this->globalBlocked);
+    }
+
+    public function isBlocked(Contact $contact): bool
+    {
+        return $this->hasBlocked($contact->id, true);
     }
 }

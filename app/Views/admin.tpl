@@ -5,6 +5,7 @@
 
 <nav>
     <?php $this->widget('Presence');?>
+    <?php $this->widget('Shortcuts');?>
     <?php $this->widget('Navigation');?>
 </nav>
 
@@ -25,7 +26,7 @@
             </ul>
         </header>
 
-        <?php if (me()->admin) { ?>
+        <?php if ($this->user->admin) { ?>
             <?php $this->widget('Tabs');?>
             <ul class="tabs" id="navtabs"></ul>
 
@@ -36,6 +37,6 @@
     </div>
 </main>
 
-<?php if (isLogged() && me()->hasPubsub() && me()->hasUpload()) { ?>
+<?php if ($this->user && $this->user?->hasPubsub() && $this->user?->hasUpload()) { ?>
     <?php $this->widget('PublishStories');?>
 <?php } ?>

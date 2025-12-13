@@ -197,10 +197,7 @@ class Bootstrap
     public function loadLanguage()
     {
         $l = \Movim\i18n\Locale::start();
-
-        if (isLogged()) {
-            $lang = DBUser::me()->language;
-        }
+        $lang = DBUser::me()?->language;
 
         if (isset($lang)) {
             $l->load($lang);
@@ -255,25 +252,25 @@ class Bootstrap
             'Avatar',
             'Blocked',
             'BottomNavigation',
+            'Chat',
+            'ChatActions',
+            'ChatOmemo',
+            'Chats',
             'Communities',
+            'CommunitiesServer',
+            'CommunitiesServers',
             'CommunityAffiliations',
             'CommunityConfig',
             'CommunityData',
             'CommunityHeader',
             'CommunityPosts',
-            'CommunitiesServer',
-            'CommunitiesServers',
+            'Config',
             'Confirm',
             'ContactActions',
             'ContactBlogConfig',
-            'ContactsSuggestions',
-            'Chat',
-            'ChatActions',
-            'ChatOmemo',
-            'Chats',
-            'Config',
             'ContactData',
             'ContactHeader',
+            'ContactsSuggestions',
             'ContactSubscriptions',
             'Dialog',
             'Drawer',
@@ -281,9 +278,9 @@ class Bootstrap
             'Login',
             'Menu',
             'Navigation',
+            'NewsNav',
             'Notif',
             'Notifications',
-            'NewsNav',
             'Post',
             'PostActions',
             'Presence',
@@ -292,6 +289,7 @@ class Bootstrap
             'Rooms',
             'RoomsExplore',
             'RoomsUtils',
+            'Shortcuts',
             'Stickers',
             'Stories',
             'Toast',

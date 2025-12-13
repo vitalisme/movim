@@ -28,6 +28,12 @@ class Post extends Model
     ];
     public $withCount = ['userViews'];
 
+    protected $casts = [
+        'published' => 'datetime:Y-m-d H:i:s',
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     private $titleLimit = 700;
     private $changed = false; // Detect if the set post was different from the cache
 
@@ -69,7 +75,7 @@ class Post extends Model
     public function userAffiliation()
     {
         return $this->hasOne('App\Affiliation', ['server', 'node'], ['server', 'node'])
-            ->where('jid', me()->id);
+            ->where('jid', me()?->id);
     }
 
     public function userViews()
@@ -214,13 +220,13 @@ class Post extends Model
         return $query->whereNull('posts.parent_id');
     }
 
-    public function scopeRestrictUserHost($query)
+    public function scopeRestrictUserHost($query, User $user)
     {
         $configuration = Configuration::get();
 
         if ($configuration->restrictsuggestions) {
-            $query->whereIn('id', function ($query) {
-                $host = me()->session->host;
+            $query->whereIn('id', function ($query) use ($user) {
+                $host = $user->session->host;
                 $query->select('id')
                     ->from('posts')
                     ->where('server', 'like', '%.' . $host)
@@ -276,6 +282,22 @@ class Post extends Model
         );
     }
 
+    protected function withFollowScope($query, ?string $since = null)
+    {
+        $posts = DB::table('posts')
+            ->whereIn(DB::raw('(server, node)'), function ($query) {
+                $query->select('server', 'node')
+                    ->from('subscriptions')
+                    ->where('jid', me()->id);
+            });
+
+        if ($since != null) {
+            $posts = $posts->where('published', '>', $since);
+        }
+
+        return $query->unionAll($posts);
+    }
+
     protected function withContactsFollowScope($query)
     {
         return $query->unionAll(
@@ -289,18 +311,17 @@ class Post extends Model
         );
     }
 
-    protected function withMineScope($query, string $node = Post::MICROBLOG_NODE)
+    protected function withMineScope($query, string $node = Post::MICROBLOG_NODE, ?string $since = null)
     {
-        return $query->unionAll(
-            DB::table('posts')
-                ->where('node', $node)
-                ->where('server', me()->id)
-        );
-    }
+        $posts = DB::table('posts')
+            ->where('node', $node)
+            ->where('server', me()->id);
 
-    public function scopeWithMine($query)
-    {
-        return $this->withMineScope($query);
+        if ($since != null) {
+            $posts = $posts->where('published', '>', $since);
+        }
+
+        return $query->unionAll($posts);
     }
 
     protected function withCommunitiesFollowScope($query)
@@ -388,7 +409,7 @@ class Post extends Model
 
     private function extractContent(SimpleXMLElement $contents): ?string
     {
-        $content = null;
+        $htmlContent = $content = null;
 
         foreach ($contents as $c) {
             switch ($c->attributes()->type) {
@@ -398,7 +419,7 @@ class Post extends Model
                     $dom = new \DOMDocument('1.0', 'utf-8');
                     $dom->loadHTML('<div>' . $d . '</div>', LIBXML_NOERROR);
 
-                    return (string)$dom->saveHTML($dom->documentElement->lastChild->lastChild);
+                    $htmlContent = (string)$dom->saveHTML($dom->documentElement->lastChild->lastChild);
                     break;
                 case 'xhtml':
                     $import = null;
@@ -415,7 +436,7 @@ class Post extends Model
                     $element = $dom->importNode($import, true);
                     $dom->appendChild($element);
 
-                    return (string)$dom->saveHTML();
+                    $htmlContent = (string)$dom->saveHTML();
                     break;
                 case 'text':
                     if (trim($c) != '') {
@@ -429,7 +450,7 @@ class Post extends Model
             }
         }
 
-        return $content;
+        return $htmlContent ?? $content;
     }
 
     private function extractTitle($titles): ?string
@@ -477,7 +498,7 @@ class Post extends Model
         // Ensure that the author is the publisher
         if (
             $entry->entry->author && $entry->entry->author->uri
-            && 'xmpp:' . baseJid((string)$entry->attributes()->publisher) == (string)$entry->entry->author->uri
+            && 'xmpp:' . bareJid((string)$entry->attributes()->publisher) == (string)$entry->entry->author->uri
         ) {
             $this->aid = substr((string)$entry->entry->author->uri, 5);
             $this->aname = ($entry->entry->author->name)
@@ -827,8 +848,10 @@ class Post extends Model
         return \App\Post::find($this->parent_id);
     }
 
-    public function isMine(User $me, ?bool $force = false): bool
+    public function isMine(?User $me, ?bool $force = false): bool
     {
+        if (!$me) return false;
+
         if ($force) {
             return ($this->aid == $me->id);
         }
@@ -880,6 +903,11 @@ class Post extends Model
     public function isStory(): bool
     {
         return $this->node == Post::STORIES_NODE;
+    }
+
+    public function isRecentStory(): bool
+    {
+        return Carbon::create($this->published)->isAfter(Carbon::now()->subDay());
     }
 
     public function isComment(): bool

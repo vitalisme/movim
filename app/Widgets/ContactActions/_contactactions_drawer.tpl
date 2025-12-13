@@ -42,7 +42,7 @@
                 <div>
                     <p class="line">
                         {$contact->truename}
-                        {if="$contact->isBlocked()"}
+                        {if="$c->me->isBlocked($contact)"}
                             <span class="tag color red">{$c->__('blocked.title')}</span>
                         {/if}
                         {if="$roster && $roster->group"}
@@ -198,7 +198,7 @@
         class="tabelem"
         title="{$c->__('adhoc.title')}">
         <ul class="list middle active">
-            {if="$contact->isBlocked()"}
+            {if="$c->me->isBlocked($contact)"}
                 <li onclick="ContactActions_ajaxUnblock('{$contact->id|echapJS}'); Drawer.clear();">
                     <span class="primary icon green">
                         <i class="material-symbols">cancel</i>
@@ -223,7 +223,7 @@
                     </div>
                 </li>
             {/if}
-            <li onclick="Chat_ajaxClearHistory('{$contact->jid|echapJS}')">
+            <li onclick="Chat_ajaxClearHistory('{$contact->id|echapJS}')">
                 <span class="primary icon gray">
                     <i class="material-symbols">clear_all</i>
                 </span>

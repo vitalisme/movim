@@ -417,6 +417,14 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0317.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:version>0.3.1</xmpp:version>
+                <xmpp:since>0.33</xmpp:since>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0319.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:version>1.0.2</xmpp:version>
@@ -692,6 +700,13 @@
             </xmpp:SupportedXep>
         </implements>
 
+        <release>
+            <Version>
+                <revision>0.32.1</revision>
+                <created>2025-01-17</created>
+                <file-release rdf:resource="https://github.com/movim/movim/releases/tag/v0.32.1"/>
+            </Version>
+        </release>
         <release>
             <Version>
                 <revision>0.32</revision>

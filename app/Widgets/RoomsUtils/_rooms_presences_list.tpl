@@ -1,6 +1,6 @@
 {$affiliation = null}
 {loop="$presences"}
-    {if="$affiliation != $value->affiliationTxt"}
+    {if="$affiliation != $value->affiliationTxt && $page == 1"}
         <li class="subheader">
             {if="$value->mucaffiliation == 'owner'"}
                 <span class="control icon tiny yellow" title="{$c->__('room.affiliation_owner')}">
@@ -18,11 +18,14 @@
             </div>
         </li>
     {/if}
-    <li class="{if="$value->last > 60"} inactive{/if}" title="{$value->resource}">
-
-        <span class="primary icon bubble small status active {$value->presencekey}"
-            {if="$value->mucjid && $compact"}
-                onclick="ChatActions_ajaxGetContact('{$value->mucjid}')"
+    <li class="{if="$value->last > 60"} inactive{/if}" title="{$value->resource}"
+        {if="$value->mucjid && $compact"}
+            onclick="RoomsUtils_ajaxGetParticipant('{$conference->conference|echapJS}', '{$value->mucjid}')"
+        {/if}
+        >
+        <span class="primary icon bubble small status {if="$value->mucjid"}active{/if} {$value->presencekey}"
+            {if="$value->mucjid"}
+                onclick="RoomsUtils_ajaxGetParticipant('{$conference->conference|echapJS}', '{$value->mucjid}'); Drawer.clear();"
             {/if}
             >
             <img loading="lazy" src="{$value->conferencePicture}">
@@ -43,7 +46,7 @@
                 </span>
             {/if}
         {/if}
-        <div {if="$compact"}onclick="Chat.quoteMUC('{$value->resource}', true);"{/if}>
+        <div>
             <p class="line normal">
                 {if="$value->mucjid && strpos($value->mucjid, '/') == false"}
                     {if="$value->mucjid == $c->me || $compact"}
@@ -65,7 +68,16 @@
                     </span>
                 {/if}
             </p>
-            {if="$value->seen"}
+            {if="$value->hats->isNotEmpty()"}
+                <p class="line">
+                    {loop="$value->hats"}
+                        <span class="chip thin" title="{$value->title}">
+                            <i class="material-symbols fill icon {$value->color}">circle</i>
+                            {$value->title}
+                        </span>
+                    {/loop}
+                </p>
+            {elseif="$value->seen"}
                 <p class="line">
                     {$c->__('last.title')} {$value->seen|prepareDate:true,true}
                 </p>

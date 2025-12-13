@@ -42,7 +42,7 @@
         <div>
             {if="$c->me->hasPubsub() && !$contact->isContact($c->me->id)"}
                 {if="$subscription == null"}
-                    <button class="button oppose color green {if="$disablefollow"}disabled{/if}" title="{$c->__('communityheader.follow')}"
+                    <button id="contact_follow" class="button oppose color green hide {if="$disablefollow"}disabled{/if}" title="{$c->__('communityheader.follow')}"
                     onclick="ContactHeader_ajaxSubscribe('{$contact->id|echapJS}'); ContactHeader.submit(this);">
                         {$c->__('communityheader.follow')}
                     </button>
@@ -55,7 +55,7 @@
             {/if}
             <p class="line active" onclick="ContactActions_ajaxGetDrawer('{$contact->id|echapJS}')">
                 {$contact->truename}
-                {if="$contact->isBlocked()"}
+                {if="$c->me->isBlocked($contact)"}
                     <span class="tag color red">{$c->__('blocked.title')}</span>
                 {/if}
                 {if="$roster && $roster->group"}

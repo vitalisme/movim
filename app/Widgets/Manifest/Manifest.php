@@ -14,12 +14,17 @@ class Manifest extends Base
             'description'   => __('global.description'),
             'scope'         => BASE_URI,
             'icons'         => [
-                /*[
-                    'src' => BASE_URI . 'theme/img/app/vectorial_square.svg',
-                    'sizes' => '512x512',
-                    'type' => 'image/svg+xml',
+                [
+                    'src' => BASE_URI . 'theme/img/app/1024_square.png',
+                    'sizes' => '1024x1024',
+                    'type' => 'image/png',
                     'purpose' => 'maskable'
-                ],*/
+                ],
+                [
+                    'src' => BASE_URI . 'theme/img/app/1024.png',
+                    'sizes' => '1024x1024',
+                    'type' => 'image/png'
+                ],
                 [
                     'src' => BASE_URI . 'theme/img/app/512_square.png',
                     'sizes' => '512x512',
@@ -29,58 +34,38 @@ class Manifest extends Base
                 [
                     'src' => BASE_URI . 'theme/img/app/512.png',
                     'sizes' => '512x512',
+                    'type' => 'image/png'
+                ],
+                [
+                    'src' => BASE_URI . 'theme/img/app/192_square.png',
+                    'sizes' => '192x192',
                     'type' => 'image/png',
-                    'purpose' => 'any'
+                    'purpose' => 'maskable'
                 ],
                 [
                     'src' => BASE_URI . 'theme/img/app/192.png',
                     'sizes' => '192x192',
-                    'type' => 'image/png',
-                    'purpose' => 'any'
+                    'type' => 'image/png'
+                ],
+                [
+                    'src' => BASE_URI . 'theme/img/app/144.png',
+                    'sizes' => '144x144',
+                    'type' => 'image/png'
                 ],
                 [
                     'src' => BASE_URI . 'theme/img/app/96.png',
                     'sizes' => '96x96',
-                    'type' => 'image/png',
-                    'purpose' => 'any'
-                ]
-            ],
-            'shortcuts'     => [
-                [
-                    'name'  => $this->__('page.chats'),
-                    'url'   => $this->route('chat'),
-                    'icons' => [
-                        [
-                            'src' => BASE_URI . 'theme/img/app/shortcuts/chat.png',
-                            'sizes' => '96x96',
-                            'type' => 'image/png',
-                            'purpose' => 'any'
-                        ]
-                    ]
+                    'type' => 'image/png'
                 ],
                 [
-                    'name'  => $this->__('page.publish'),
-                    'url'   => $this->route('publish'),
-                    'icons' => [
-                        [
-                            'src' => BASE_URI . 'theme/img/app/shortcuts/publish.png',
-                            'sizes' => '96x96',
-                            'type' => 'image/png',
-                            'purpose' => 'any'
-                        ]
-                    ]
+                    'src' => BASE_URI . 'theme/img/app/72.png',
+                    'sizes' => '72x72',
+                    'type' => 'image/png'
                 ],
                 [
-                    'name'  => $this->__('page.news'),
-                    'url'   => $this->route('news'),
-                    'icons' => [
-                        [
-                            'src' => BASE_URI . 'theme/img/app/shortcuts/news.png',
-                            'sizes' => '96x96',
-                            'type' => 'image/png',
-                            'purpose' => 'any'
-                        ]
-                    ]
+                    'src' => BASE_URI . 'theme/img/app/48.png',
+                    'sizes' => '48x48',
+                    'type' => 'image/png'
                 ]
             ],
             'display_override' => ['window-controls-overlay'],
@@ -90,7 +75,7 @@ class Manifest extends Base
             'theme_color'   => '#10151A',
             'id'            => '/login',
             'start_url'     => '/login',
-            'launch_handler'=> [
+            'launch_handler' => [
                 'client_mode' => 'navigate-new',
             ],
             'categories'    => ['news', 'photo', 'social', 'entertainment'],
@@ -102,6 +87,16 @@ class Manifest extends Base
                 'name'     => 'Movim',
                 'url' => '/share/%s'
             ]],
+            'share_target' => [
+                'action' => "/share/",
+                'method' => 'POST',
+                'params' => [
+                    'title' => 'title',
+                    'text' => 'description',
+                    'url' => 'url'
+
+                ]
+            ],
             'handle_links' => 'preferred',
             'edge_side_panel' => ['preferred_width' => 375],
         ];

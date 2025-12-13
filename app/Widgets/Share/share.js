@@ -1,17 +1,22 @@
 var Share = {
-    get: function() {
+    get: function () {
         var parts = MovimUtils.urlParts();
+
         if (parts.params[0]) {
             uri = parts.params[0].substr(0, 5) == 'xmpp:'
                 ? parts.params[0]
                 : atob(parts.params[0]);
 
-            document.querySelector('h4').innerHTML = uri;
-            Share_ajaxGet(uri);
+            Share.openUri(uri);
         }
+    },
+
+    openUri: function (uri) {
+        document.querySelector('h4').innerHTML = uri;
+        Share_ajaxGet(uri);
     }
 };
 
-MovimWebsocket.attach(function() {
+MovimWebsocket.attach(function () {
     Share.get();
 });

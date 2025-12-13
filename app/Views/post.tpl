@@ -3,7 +3,7 @@
 <?php $this->widget('Notifications');?>
 <?php $this->widget('SendTo');?>
 <?php $this->widget('Tabs');?>
-<?php if(me()->hasOMEMO()) $this->widget('ChatOmemo');?>
+<?php if($this->user?->hasOMEMO()) $this->widget('ChatOmemo');?>
 
 <?php $this->widget('ContactActions');?>
 <?php $this->widget('AdHoc');?>
@@ -11,6 +11,7 @@
 
 <nav>
     <?php $this->widget('Presence');?>
+    <?php $this->widget('Shortcuts');?>
     <?php $this->widget('Navigation');?>
 </nav>
 
@@ -20,6 +21,6 @@
     <?php $this->widget('Post');?>
 </main>
 
-<?php if (me()->hasPubsub() && me()->hasUpload()) { ?>
+<?php if ($this->user?->hasPubsub() && $this->user?->hasUpload()) { ?>
     <?php $this->widget('PublishStories');?>
 <?php } ?>

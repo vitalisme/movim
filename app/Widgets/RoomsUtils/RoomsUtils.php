@@ -3,6 +3,7 @@
 namespace App\Widgets\RoomsUtils;
 
 use Moxl\Xec\Action\Vcard\Set as VcardSet;
+use Moxl\Xec\Action\Vcard4\Get as VcardGet;
 use Moxl\Xec\Action\Message\Invite;
 use Moxl\Xec\Action\Muc\SetSubject;
 use Moxl\Xec\Action\Muc\Destroy;
@@ -23,6 +24,7 @@ use App\Message;
 use App\Widgets\AdHoc\AdHoc;
 use App\Widgets\Chat\Chat;
 use App\Widgets\Chats\Chats;
+use App\Widgets\ContactActions\ContactActions;
 use App\Widgets\Dialog\Dialog;
 use App\Widgets\Drawer\Drawer;
 use Respect\Validation\Validator;
@@ -43,6 +45,7 @@ class RoomsUtils extends Base
     public function load()
     {
         $this->registerEvent('vcard_set_handle', 'onAvatarSet', 'chat');
+        $this->registerEvent('vcard4_get_handle', 'onVcard', 'chat');
         $this->registerEvent('disco_items_nosave_handle', 'onDiscoGateway');
         $this->registerEvent('disco_items_nosave_error', 'onDiscoGatewayError');
         $this->registerEvent('disco_items_errorregistrationrequired', 'onDiscoRegistrationRequired');
@@ -159,6 +162,12 @@ class RoomsUtils extends Base
             $presences->pop();
         }
 
+        if (!$havePagination) {
+            $ownerFilter = fn($p) => $p->mucaffiliation == 'owner';
+            $owners = $presences->reject($ownerFilter);
+            $presences = $presences->filter($ownerFilter)->union($owners);
+        }
+
         return $this->view('_rooms_presences_list', [
             'more' => $havePagination,
             'conference' => $conference,
@@ -192,6 +201,43 @@ class RoomsUtils extends Base
             $this->rpc('ContactActions.resolveSessionsStates', $jid, true);
         }
         $this->rpc('RoomsUtils.resolveRoomEncryptionState', $room);
+    }
+
+    public function onVcard(Packet $packet)
+    {
+        \logDebug($packet->content);
+        $this->rpc(
+            'MovimTpl.fill',
+            '#' . cleanupId($packet->content) . '-vcard',
+            $this->prepareVcard(\App\Contact::firstOrNew(['id' => $packet->content]))
+        );
+    }
+
+    public function ajaxGetParticipant(string $room, string $mucjid)
+    {
+        $conference = $this->me->session->conferences()
+            ->where('conference', $room)
+            ->with('info')
+            ->first();
+
+        if (!$conference) return;
+
+        $r = new VcardGet;
+        $r->setTo($mucjid)
+            ->request();
+
+        Dialog::fill($this->view('_rooms_participant', [
+            'contact' => \App\Contact::firstOrNew(['id' => $mucjid]),
+            'conference' => $conference,
+            'clienttype' => getClientTypes(),
+            'presence' => $conference->presences()
+                ->with('capability')->where('mucjid', $mucjid)->first()
+        ]));
+    }
+
+    public function prepareVcard(\App\Contact $contact)
+    {
+        return (new ContactActions)->prepareVcard($contact);
     }
 
     /**

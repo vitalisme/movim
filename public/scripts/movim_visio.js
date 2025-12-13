@@ -34,6 +34,10 @@ var MovimVisio = {
 
         MovimVisio.id = id;
 
+        // Set a lock for the current browser (in case there's several others opened)
+        localStorage.setItem('callId', id);
+        localStorage.setItem('callJid', jid);
+
         let visio = document.querySelector('#visio');
         delete visio.dataset.type;
         visio.dataset.jid = jid;
@@ -291,6 +295,11 @@ var MovimVisio = {
 
         MovimVisio.observer = new MutationObserver(callback);
         MovimVisio.observer.observe(body, { childList: true, subtree: true });
+    },
+
+    callStop: function (id, jid) {
+        localStorage.removeItem('callId');
+        localStorage.removeItem('callJid');
     }
 }
 
@@ -299,6 +308,6 @@ Visio_ajaxHttpGetStates();
 MovimWebsocket.attach(() => {
     if (MovimVisio.services.length == 0) {
         Visio_ajaxResolveServices();
-        Visio_ajaxTryForceStop();
+        Visio_ajaxCheckStatus(localStorage.getItem('callId'), localStorage.getItem('callJid'));
     }
 });

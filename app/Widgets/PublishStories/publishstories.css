@@ -32,14 +32,17 @@
 #publishstories #publishstoriesshoot,
 #publishstories #publishstoriesgallery,
 #publishstories #publishstoriesswitch,
-#publishstories #publishstoriesclose,
 #publishstories #publishstoriessource,
 #publishstories #publishstoriesnext,
 #publishstories #publishactions,
 #publishstories #publishstoriesbackedit,
+#publishstories #publishstoriespreview,
 #publishstories.edit.publish #publishstoriesback,
 #publishstories.edit.publish #publishstoriesnext,
-#publishstories.edit.publish #publishstoriesclose,
+#publishstories.shoot #publishstoriesheadedit,
+#publishstories.edit #publishstorieshead,
+#publishstories.edit.publish #publishstorieshead,
+#publishstories.edit.publish #publishstoriesheadedit,
 #publishstories.shoot.error video,
 #publishstories form {
     display: none;
@@ -60,10 +63,10 @@
 #publishstories.shoot:not(.error) #publishstoriesshoot,
 #publishstories.shoot #publishstoriesgallery,
 #publishstories.shoot:not(.error) #publishstoriesswitch.enabled,
-#publishstories.edit #publishstoriesclose,
 #publishstories.edit form,
 #publishstories.edit #publishstoriesnext,
 #publishstories.edit.publish #publishactions,
+#publishstories.edit.publish #publishstoriespreview,
 #publishstories.edit.publish #publishstoriesbackedit {
     display: initial;
 }
@@ -120,9 +123,10 @@
 }
 
 #publishstories video {
-    background-image: url(../theme/img/movim_cloud.svg);
+    background-image: url(../theme/img/cloud_spinner.svg);
     background-repeat: no-repeat;
     background-position: center center;
+    background-size: 9rem;
     object-fit: cover;
 }
 

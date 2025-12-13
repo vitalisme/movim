@@ -24,7 +24,7 @@ class Stories extends Base
     {
         $post = Post::find($packet->content);
 
-        if ($post) {
+        if ($post && $post->isRecentStory()) {
             if (!$post->isMine($this->me)) {
                 $contact = \App\Contact::firstOrNew(['id' => $post->server]);
 

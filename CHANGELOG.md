@@ -3,6 +3,16 @@ Movim Changelog
 
 v0.33 (master)
 ---------------------------
+* Add a Shortcuts widget to quickly access the 3 most recent notified chats and chatrooms
+* Implement XEP-0317: Hats and display it in the MUC navigation bar and in a new MUC participant card
+* Jingle and Video-conference fixes
+* Add share_target support in the Manifest and Share widget
+* Handle calls when having multiple browsers connected on one Movim session, allow all the browser to hang-up the current call
+* Disable password change and account deletion if the server doesn't have jabber:iq:register
+
+v0.32.1
+---------------------------
+* Fix a content parsing issue when handling Atom articles
 
 v0.32
 ---------------------------

@@ -2,7 +2,9 @@
 
 namespace App\Widgets\ContactActions;
 
+use App\Contact;
 use App\Message;
+use App\Roster;
 use App\Widgets\AdHoc\AdHoc;
 use App\Widgets\Chat\Chat;
 use App\Widgets\Chats\Chats;
@@ -75,15 +77,6 @@ class ContactActions extends Base
         $tpl->assign('jid', $jid);
         $tpl->assign('incall', CurrentCall::getInstance()->isStarted());
         $tpl->assign('clienttype', getClientTypes());
-        $tpl->assign(
-            'posts',
-            \App\Post::where('server', $jid)
-                ->restrictToMicroblog()
-                ->where('open', true)
-                ->orderBy('published', 'desc')
-                ->take(4)
-                ->get()
-        );
 
         Drawer::fill('contact_drawer', $tpl->draw('_contactactions_drawer'));
         $this->rpc('Tabs.create');
@@ -208,6 +201,14 @@ class ContactActions extends Base
         $tpl->assign('jid', $jid);
 
         $this->rpc('MovimTpl.append', '#contact_links', $tpl->draw('_contactactions_drawer_links'));
+    }
+
+    public function prepareVcard(Contact $contact, ?Roster $roster = null)
+    {
+        return $this->view('_contactactions_vcard', [
+            'contact' => $contact,
+            'roster' => $roster
+        ]);
     }
 
     public function prepareEmbedUrl(Message $message)
