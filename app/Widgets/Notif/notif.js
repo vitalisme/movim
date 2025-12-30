@@ -149,44 +149,40 @@ var Notif = {
         target = document.getElementById('snackbar');
         target.innerHTML = '';
     },
-    desktop: function (title, body, picture, action, actionButton, group, timestamp, execute, force) {
+    desktop: function (tag, timestamp, title, body, picture, actions, data, force) {
         if (!force && (Notif.inhibed == true
             || Notif.focused
-            || typeof Notification === 'undefined')) return;
-
-        if (!window.Notification || !Notification.requestPermission) {
-            return false;
-        }
+            || typeof Notification === 'undefined')
+            || !window.Notification
+            || !Notification.requestPermission) return;
 
         if (Notification.permission === 'granted') {
             Notif.checkPushSubscription();
 
             try {
-                var notification = new Notification(
-                    title,
-                    {
-                        body: body,
-                        icon: picture,
-                        badge: '/theme/img/app/badge.png',
-                        vibrate: [100, 50, 100],
-                        data: { url: action },
-                        actions: [{ action: action, title: actionButton }],
-                        timestamp: timestamp * 1000,
-                        tag: group,
-                    }
-                );
+                options = {
+                    badge: '/theme/img/app/badge.png',
+                    tag: tag,
+                    timestamp: timestamp * 1000,
+                    body: body,
+                    icon: picture,
+                    actions: actions,
+                    data: data,
+                    vibrate: [100, 50, 100],
+                };
 
-                if (action !== null) {
-                    notification.onclick = function () {
-                        window.location.href = action;
-                        Notif.snackbarClear();
-                        this.close();
-                    }
-                }
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistration(SW_URI).then((registration) => {
+                        registration.showNotification(title, options);
+                    });
+                } else {
+                    var notification = new Notification(
+                        title,
+                        options
+                    );
 
-                if (execute !== null) {
                     notification.onclick = function () {
-                        eval(execute);
+                        window.location.href = data.url;
                         Notif.snackbarClear();
                         this.close();
                     }
@@ -199,8 +195,17 @@ var Notif = {
             Notif_ajaxRequest();
         }
     },
+    clear: function (group) {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistration(SW_URI).then((registration) => {
+                registration.getNotifications({ tag: group }).then((notifications) =>
+                    notifications.forEach(notification => notification.close())
+                );
+            });
+        }
+    },
     request: function () {
-        Notification.requestPermission().then((permission) => {
+        Notification.requestPermission().then(permission => {
             (permission == 'granted')
                 ? Notif_ajaxRequestGranted()
                 : Notif_ajaxRequestDenied();
@@ -214,10 +219,10 @@ var Notif = {
     },
     checkPushSubscription() {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistration(BASE_URI + 'sw.js').then((registration) => {
+            navigator.serviceWorker.getRegistration(SW_URI).then(registration => {
                 if (!registration) return;
 
-                registration.pushManager.getSubscription().then((pushSubscription) => {
+                registration.pushManager.getSubscription().then(pushSubscription => {
                     if (pushSubscription == null) {
                         // Register the push notification subcription
                         registration.pushManager.subscribe({

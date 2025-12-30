@@ -25,13 +25,12 @@ class Pusher
 
     public function send(
         string $userId,
+        ?string $tag = null,
         string $title,
         ?string $body = null,
         ?string $picture = null,
-        ?string $action = null,
-        ?string $actionButton = null,
-        ?string $group = null,
-        ?string $execute = null
+        ?array $actions = [],
+        ?array $data = [],
     ): void {
         foreach (
             PushSubscription::where('user_id', $userId)
@@ -48,14 +47,13 @@ class Pusher
                     ]
                 ]),
                 json_encode([
+                    'tag' => $tag,
+                    'timestamp' => time(),
                     'title' => $title,
                     'body' => $body,
                     'picture' => $picture,
-                    'action' => $action,
-                    'actionButton' => $actionButton ?? __('button.open'),
-                    'group' => $group,
-                    'execute' => $execute,
-                    'timestamp' => time(),
+                    'actions' => $actions,
+                    'data' => $data,
                 ])
             );
         }

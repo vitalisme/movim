@@ -1,5 +1,7 @@
-var version = 4;
+var version = 5;
 var cacheKey = 'movim_' + version;
+
+const channel = new BroadcastChannel('messages');
 
 self.addEventListener('install', (e) => {
     // Workaround for https://issues.chromium.org/issues/466790291
@@ -78,25 +80,14 @@ self.addEventListener('push', function (e) {
 });
 
 self.addEventListener('notificationclick', function (e) {
+    channel.postMessage({ type: e.action, data: e.notification.data });
+
+    if (clients.length == 0) {
+        return clients.openWindow(e.notification.data.url);
+    }
+
     e.notification.close();
-
-    e.waitUntil(clients.matchAll({
-        type: 'window'
-    }).then(function (clientList) {
-        for (var i = 0; i < clientList.length; i++) {
-            var client = clientList[i];
-
-            if (client.url == e.notification.data.url && 'focus' in client) {
-                return client.focus();
-            }
-        }
-
-        if (clients.openWindow) {
-            return clients.openWindow(e.notification.data.url);
-        }
-    }));
-}
-    , false);
+});
 
 self.addEventListener('fetch', (e) => {
     e.respondWith(
