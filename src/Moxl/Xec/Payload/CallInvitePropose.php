@@ -16,12 +16,12 @@ class CallInvitePropose extends Payload
             CurrentCall::getInstance()->isStarted()
             && CurrentCall::getInstance()->isJidInCall(bareJid($parent->attributes()->from))
         ) {
-            $conference = me()->session->conferences()->where('conference', \bareJid((string)$parent->attributes()->from))->first();
+            $conference = $this->me->session->conferences()->where('conference', \bareJid((string)$parent->attributes()->from))->first();
 
             if ($conference) {
                 // If the propose is from another person
                 if (!$conference->presence || $conference->presence->resource != \explodeJid((string)$parent->attributes()->from)['resource']) {
-                    $reject = new Reject;
+                    $reject = new Reject($this->me);
                     $reject->setTo(\bareJid((string)$parent->attributes()->from))
                         ->setId((string)$stanza->attributes()->id)
                         ->request();
@@ -37,7 +37,7 @@ class CallInvitePropose extends Payload
         ) {
             $muji = \App\MujiCall::firstOrCreate([
                 'id' => (string)$stanza->attributes()->id,
-                'session_id' => SESSION_ID
+                'session_id' => $this->me->session->id
             ], [
                 'muc' => (string)$stanza->muji->attributes()->room,
                 'jidfrom' => $carbon
@@ -48,7 +48,7 @@ class CallInvitePropose extends Payload
             ]);
 
             MujiCallParticipant::firstOrCreate([
-                'session_id' => SESSION_ID,
+                'session_id' => $this->me->session->id,
                 'muji_call_id' => (string)$stanza->attributes()->id,
                 'jid' => (string)$parent->attributes()->from
             ], [
@@ -56,6 +56,7 @@ class CallInvitePropose extends Payload
             ]);
 
             $message = Message::eventMessageFactory(
+                $this->me,
                 'muji_propose',
                 bareJid((string)$parent->attributes()->from),
                 (string)$stanza->attributes()->id

@@ -14,12 +14,12 @@ class SetAffiliations extends Action
     public function request()
     {
         $this->store();
-        Pubsub::setAffiliations($this->_to, $this->_node, $this->_data);
+        $this->iq(Pubsub::setAffiliations($this->_node, $this->_data), to: $this->_to, type: 'set');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $ga = new GetAffiliations;
+        $ga = new GetAffiliations($this->me);
         $ga->setTo($this->_to)
            ->setNode($this->_node)
            ->request();

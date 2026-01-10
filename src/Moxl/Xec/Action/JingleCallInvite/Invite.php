@@ -16,12 +16,12 @@ class Invite extends Action
     public function request()
     {
         $this->store();
-        JingleCallInvite::invite($this->_to, $this->_id, $this->_room, $this->_video);
+        $this->send(JingleCallInvite::invite($this->_to, $this->_id, $this->_room, $this->_video));
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $propose = new CallInvitePropose;
+        $propose = new CallInvitePropose($this->me);
         $propose->handle($stanza->invite, $stanza);
     }
 

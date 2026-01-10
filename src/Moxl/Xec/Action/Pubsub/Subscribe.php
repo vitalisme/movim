@@ -16,12 +16,12 @@ class Subscribe extends Action
     public function request()
     {
         $this->store();
-        Pubsub::subscribe($this->_to, $this->_from, $this->_node);
+        $this->iq(Pubsub::subscribe($this->_from, $this->_node), to: $this->_to, type: 'set');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $sa = new SubscriptionAdd;
+        $sa = new SubscriptionAdd($this->me);
         $sa->setServer($this->_to)
            ->setNode($this->_node)
            ->setFrom($this->_from)

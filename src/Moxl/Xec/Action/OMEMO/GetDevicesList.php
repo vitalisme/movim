@@ -12,7 +12,7 @@ class GetDevicesList extends Action
     public function request()
     {
         $this->store();
-        OMEMO::GetDevicesList($this->_to);
+        $this->iq(OMEMO::getDevicesList(), to: $this->_to, type: 'get');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
@@ -34,7 +34,7 @@ class GetDevicesList extends Action
 
         foreach ($devicesIds as $deviceId) {
             $deviceCount++;
-            $gb = new GetBundle;
+            $gb = new GetBundle($this->me);
             $gb->setTo($this->_to)
                 ->setId($deviceId);
 

@@ -5,18 +5,17 @@ namespace Moxl\Xec\Action\Message;
 use App\MessageFile;
 use Moxl\Xec\Action;
 use Moxl\Stanza\Message;
-use Moxl\Stanza\Muc;
 use App\MessageOmemoHeader;
 
 class Publish extends Action
 {
-    protected $_to;
-    protected $_content;
-    protected $_html;
-    protected $_muc = false;
-    protected $_mucreceipts = false;
-    protected $_id = false;
-    protected $_replace = false;
+    protected string $_to;
+    protected ?string $_content = null;
+    protected ?string $_html = null;
+    protected bool $_muc = false;
+    protected bool $_mucreceipts = false;
+    protected ?string $_id = null;
+    protected ?string $_replace = null;
     protected ?MessageFile $_file = null;
     protected $_attachid = false;
     protected $_originid = false;
@@ -33,20 +32,25 @@ class Publish extends Action
     public function request()
     {
         $this->store($this->_id);
-
-        if ($this->_muc) {
-            Muc::message($this->_to, $this->_content, $this->_html, $this->_id,
-                         $this->_replace, $this->_file, $this->_attachid, [],
-                         $this->_originid, $this->_threadid, $this->_mucreceipts,
-                         $this->_replyid, $this->_replyto, $this->_replyquotedbodylength,
-                         $this->_messageOMEMO);
-        } else {
-            Message::message($this->_to, $this->_content, $this->_html, $this->_id,
-                             $this->_replace, $this->_file, $this->_attachid, [],
-                             $this->_originid, $this->_threadid, $this->_replyid,
-                             $this->_replyto, $this->_replyquotedbodylength,
-                             $this->_messageOMEMO);
-        }
+        $this->send(Message::maker(
+            to: $this->_to,
+            type: $this->_muc ? 'groupchat' : 'chat',
+            content: $this->_content,
+            html: $this->_html,
+            chatstates: 'active',
+            receipts: !$this->_muc || ($this->_muc && $this->_mucreceipts) ? 'request' : null,
+            id: $this->_id,
+            replace: $this->_replace,
+            file: $this->_file,
+            parentId: $this->_attachid,
+            reactions: [],
+            originId: $this->_originid,
+            threadId: $this->_threadid,
+            replyId: $this->_replyid,
+            replyTo: $this->_replyto,
+            replyQuotedBodyLength: $this->_replyquotedbodylength,
+            messageOMEMO: $this->_messageOMEMO
+        ));
     }
 
     public function setMuc()
@@ -74,7 +78,7 @@ class Publish extends Action
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
         if ($this->_muc) {
-            $m = new \Moxl\Xec\Payload\Message;
+            $m = new \Moxl\Xec\Payload\Message($this->me);
             $m->handle($stanza, $parent);
         }
     }

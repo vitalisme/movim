@@ -9,10 +9,10 @@ class Register extends Payload
 {
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $session = DBSession::find(SESSION_ID);
+        $session = DBSession::find($this->me->session->id);
 
         if ($session && isset($session->username)) {
-            $r = new Get;
+            $r = new Get($this->me);
             $r->request();
         }
     }

@@ -14,7 +14,7 @@ class Set extends Action
     public function request()
     {
         $this->store();
-        Storage::publish($this->_data, $this->_withPublishOption);
+        $this->iq(Storage::publish($this->_data, $this->_withPublishOption), type: 'set');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
@@ -35,7 +35,7 @@ class Set extends Action
 
     public function errorConflict(string $errorId, ?string $message = null)
     {
-        $config = new SetConfig;
+        $config = new SetConfig($this->me);
         $config->setNode(Storage::$node)
                ->setData(Storage::$nodeConfig)
                ->request();

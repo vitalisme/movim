@@ -11,7 +11,7 @@ class GetList extends Action
     public function request()
     {
         $this->store();
-        Roster::get();
+        $this->iq(Roster::get(), type: 'get');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
@@ -21,12 +21,12 @@ class GetList extends Action
         foreach ($stanza->query->item as $item) {
             $roster = new DBRoster;
 
-            if ($roster->set($item)) {
+            if ($roster->set($this->me, $item)) {
                 array_push($rosters, $roster->toArray());
             }
         }
 
-        DBRoster::where('session_id', SESSION_ID)->delete();
+        DBRoster::where('session_id', $this->me->session->id)->delete();
         DBRoster::saveMany($rosters);
 
         $this->deliver();

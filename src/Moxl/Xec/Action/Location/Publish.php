@@ -16,7 +16,7 @@ class Publish extends Action
     public function request()
     {
         $this->store();
-        Location::publish($this->_geo, $this->_withPublishOption);
+        $this->iq(Location::publish($this->_geo, $this->_withPublishOption), type: 'set');
     }
 
     public function setGeo(array $geo)
@@ -51,7 +51,7 @@ class Publish extends Action
 
     public function errorConflict(string $errorId, ?string $message = null)
     {
-        $config = new SetConfig;
+        $config = new SetConfig($this->me);
         $config->setNode(Location::$node)
                ->setData(Location::$nodeConfig)
                ->request();

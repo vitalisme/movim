@@ -16,12 +16,12 @@ class Unsubscribe extends Action
     public function request()
     {
         $this->store();
-        Pubsub::unsubscribe($this->_to, $this->_from, $this->_node, $this->_subid);
+        $this->iq(Pubsub::unsubscribe($this->_from, $this->_node, $this->_subid), to: $this->_to, type: 'set');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $sa = new SubscriptionRemove;
+        $sa = new SubscriptionRemove($this->me);
         $sa->setServer($this->_to)
            ->setNode($this->_node)
            ->setFrom($this->_from)

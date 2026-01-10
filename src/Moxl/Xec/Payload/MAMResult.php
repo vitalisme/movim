@@ -21,8 +21,8 @@ class MAMResult extends Payload
         ) {
             $session->set('mamid' . (string)$stanza->attributes()->queryid, $messagesCounter + 1);
 
-            $message = \App\Message::findByStanza($stanza, $parent);
-            $message = $message->set($stanza->forwarded->message, $stanza->forwarded);
+            $message = \App\Message::findByStanza($this->me, $stanza, $parent);
+            $message = $message->set($this->me, $stanza->forwarded->message, $stanza->forwarded);
 
             // parent message doesn't exists
             if ($message == null) {
@@ -36,7 +36,7 @@ class MAMResult extends Payload
                     $stanza->forwarded->message->retract
                     && $stanza->forwarded->message->retract->attributes()->xmlns == 'urn:xmpp:message-retract:1'
                 ) {
-                    $retracted = new Retracted;
+                    $retracted = new Retracted($this->me);
                     $retracted->handle($stanza->forwarded->message->retract, $stanza->forwarded->message);
                     return;
                 }
@@ -45,7 +45,7 @@ class MAMResult extends Payload
                     $stanza->forwarded->message->invite
                     && $stanza->forwarded->message->invite->attributes()->xmlns == 'urn:xmpp:call-invites:0'
                 ) {
-                    $invite = new CallInvitePropose;
+                    $invite = new CallInvitePropose($this->me);
                     $invite->handle($stanza->forwarded->message->invite, $stanza->forwarded->message);
                 }
 
@@ -53,7 +53,7 @@ class MAMResult extends Payload
                     $stanza->forwarded->message->retract
                     && $stanza->forwarded->message->retract->attributes()->xmlns == 'urn:xmpp:call-invites:0'
                 ) {
-                    $retract = new CallInviteRetract;
+                    $retract = new CallInviteRetract($this->me);
                     $retract->handle($stanza->forwarded->message->retract, $stanza->forwarded->message);
                 }
 
@@ -61,7 +61,7 @@ class MAMResult extends Payload
                     $stanza->forwarded->message->accept
                     && $stanza->forwarded->message->accept->attributes()->xmlns == 'urn:xmpp:call-invites:0'
                 ) {
-                    $accept = new CallInviteAccept;
+                    $accept = new CallInviteAccept($this->me);
                     $accept->handle($stanza->forwarded->message->accept, $stanza->forwarded->message);
                 }
 
@@ -69,7 +69,7 @@ class MAMResult extends Payload
                     $stanza->forwarded->message->left
                     && $stanza->forwarded->message->left->attributes()->xmlns == 'urn:xmpp:call-invites:0'
                 ) {
-                    $left = new CallInviteLeft;
+                    $left = new CallInviteLeft($this->me);
                     $left->handle($stanza->forwarded->message->left, $stanza->forwarded->message);
                 }
             }

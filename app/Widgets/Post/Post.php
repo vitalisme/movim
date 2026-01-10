@@ -23,8 +23,7 @@ class Post extends Base
         $this->registerEvent('microblog_commentpublish_error', 'onCommentPublishError');
         $this->registerEvent('pubsub_postdelete_handle', 'onDelete', 'post');
         $this->registerEvent('pubsub_getitem_errorpresencesubscriptionrequired', 'onPresenceSubscriptionRequired');
-        $this->registerEvent('post', 'tonHandle', 'post');
-        $this->registerEvent('post_resolved', 'tonHandle', 'post');
+        $this->registerEvent('post_refreshed', 'tonHandle', 'post');
         $this->registerEvent('post_comment_published', 'onCommentPublished', 'post');
     }
 
@@ -116,7 +115,7 @@ class Post extends Base
 
     public function ajaxGetContact($jid)
     {
-        $c = new ContactActions();
+        $c = new ContactActions($this->me);
         $c->ajaxGetDrawer($jid);
     }
 
@@ -128,7 +127,7 @@ class Post extends Base
             ->with('tags')
             ->first();
 
-        $gi = new GetItem;
+        $gi = $this->xmpp(new GetItem);
         $gi->setTo($server)
             ->setNode($node)
             ->setId($nodeid)
@@ -145,7 +144,7 @@ class Post extends Base
 
             // If the post is a reply but we don't have the original
             if ($p->isReply() && !$p->getReply()) {
-                $gi = new GetItem;
+                $gi = $this->xmpp(new GetItem);
                 $gi->setTo($p->replyserver)
                     ->setNode($p->replynode)
                     ->setId($p->replynodeid)
@@ -189,7 +188,7 @@ class Post extends Base
             ->where('parent_id', $post->id)
             ->delete();
 
-        $c = new CommentsGet;
+        $c = $this->xmpp(new CommentsGet);
         $c->setTo($post->commentserver)
             ->setId($post->commentnodeid)
             ->setParentId($post->id)
@@ -211,7 +210,7 @@ class Post extends Base
             ->first();
 
         if ($p) {
-            $cp = new CommentPublish;
+            $cp = $this->xmpp(new CommentPublish);
             $cp->setTo($p->commentserver)
                 ->setFrom($this->me->id)
                 ->setId($p->commentnodeid)

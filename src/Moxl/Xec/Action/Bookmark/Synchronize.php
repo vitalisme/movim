@@ -16,7 +16,7 @@ class Synchronize extends Action
     public function request()
     {
         $this->store();
-        Bookmark::get();
+        $this->iq(Bookmark::get(), to: $this->_to, type: 'get');
     }
 
     protected function saveItem($c)
@@ -28,7 +28,7 @@ class Synchronize extends Action
         $conference->nick           = (string)$c->nick;
         $conference->autojoin       = filter_var($c->attributes()->autojoin, FILTER_VALIDATE_BOOLEAN);
 
-        $s = new Set;
+        $s = new Set($this->me);
         $s->setConference($conference)
           ->request();
     }

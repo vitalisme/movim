@@ -7,8 +7,8 @@ use Moxl\Stanza\Disco;
 
 class Request extends Action
 {
-    protected $_node = false;
-    protected $_to;
+    protected ?string $_node = null;
+    protected ?string $_to = null;
     protected $_parent;
 
     // Excluded nodes
@@ -21,7 +21,7 @@ class Request extends Action
         $this->store();
 
         if (!in_array($this->_node, $this->_excluded)) {
-            Disco::request($this->_to, $this->_node);
+            $this->iq(Disco::request($this->_node), to: $this->_to, type: 'get');
         }
     }
 

@@ -181,24 +181,6 @@
                     </div>
                 </li>
             {/if}
-            {if="$conference->presence->mucrole == 'moderator'"}
-                <li onclick="RoomsUtils_ajaxGetAvatar('{$jid|echapJS}')">
-                    <span class="primary icon gray">
-                        <i class="material-symbols">image</i>
-                    </span>
-                    <div>
-                        <p class="normal">{$c->__('page.avatar')}</p>
-                    </div>
-                </li>
-                <li onclick="RoomsUtils_ajaxGetSubject('{$jid|echapJS}')">
-                    <span class="primary icon gray">
-                        <i class="material-symbols">short_text</i>
-                    </span>
-                    <div>
-                        <p class="normal">{$c->__('chatroom.subject')}</p>
-                    </div>
-                </li>
-            {/if}
             {if="$conference->presence->mucaffiliation == 'owner'"}
                 <li onclick="Chat_ajaxGetRoomConfig('{$jid|echapJS}')">
                     <span class="primary icon gray">
@@ -208,10 +190,26 @@
                         <p class="normal">{$c->__('chatroom.config')}</p>
                     </div>
                 </li>
-                <li class="divided" onclick="RoomsUtils_ajaxAskDestroy('{$jid|echapJS}')">
+            {/if}
+            {if="$conference->presence->mucrole == 'moderator'"}
+                <li onclick="RoomsUtils_ajaxGetSubject('{$jid|echapJS}')">
                     <span class="primary icon gray">
-                        <i class="material-symbols">delete_forever</i>
+                        <i class="material-symbols">short_text</i>
                     </span>
+                    <div>
+                        <p class="normal">{$c->__('chatroom.subject')}</p>
+                    </div>
+                </li>
+                <li onclick="RoomsUtils_ajaxGetAvatar('{$jid|echapJS}')">
+                    <span class="primary icon gray"></span>
+                    <div>
+                        <p class="normal">{$c->__('page.avatar')}</p>
+                    </div>
+                </li>
+            {/if}
+            {if="$conference->presence->mucaffiliation == 'owner'"}
+                <li class="divided" onclick="RoomsUtils_ajaxAskDestroy('{$jid|echapJS}')">
+                    <span class="primary icon"></span>
                     <div>
                         <p class="normal">{$c->__('button.destroy')}</p>
                     </div>
@@ -240,9 +238,7 @@
         {/if}
 
         <li onclick="Rooms_ajaxExit('{$jid|echapJS}'); {if="$anon"}Presence_ajaxLogout(){/if}">
-            <span class="primary icon gray">
-                <i class="material-symbols">logout</i>
-            </span>
+            <span class="primary icon"></span>
             <div>
                 <p class="normal">{$c->__('status.disconnect')}</p>
             </div>
@@ -256,14 +252,21 @@
                 <i class="material-symbols">arrow_back</i>
             </span>
 
+            {$storiesCount = 0}
+
             <span class="primary icon bubble active
                 {if="$roster"}
+                    {$storiesCount = $c->me->rosterStories($roster)->count()}
                     {if="$roster->presence"}status {$roster->presence->presencekey}{/if}
-                    {if="$roster->stories->count()"}stories {if="$roster->storiesSeen"}seen{/if}{/if}
+                    {if="$storiesCount > 0"}stories
+                        {if="$roster"}seen{/if}
+                    {/if}
                 {/if}
             "
-            {if="$roster && $roster->firstUnseenStory"}
-                onclick="StoriesViewer_ajaxHttpGet({$roster->firstUnseenStory->id})"
+            {if="$roster && $firstUnseenStory = $c->me->rosterFirstUnseenStory($roster)"}
+                onclick="StoriesViewer_ajaxHttpGet({$firstUnseenStory->id}); event.stopPropagation();"
+            {elseif="$storiesCount > 0"}
+                onclick="StoriesViewer_ajaxHttpGet({$c->me->rosterStories($roster)->first()->id}); event.stopPropagation();"
             {else}
                 onclick="ChatActions_ajaxGetContact('{$contact->id|echapJS}')"
             {/if}>
@@ -356,14 +359,6 @@
                 </div>
             </li>
         {/if}
-        <li onclick="Chat_ajaxClearHistory('{$contact->id|echapJS}')">
-            <span class="primary icon gray">
-                <i class="material-symbols">clear_all</i>
-            </span>
-            <div>
-                <p class="normal line">{$c->__('chat.clear_history')}</p>
-            </div>
-        </li>
         {if="!empty($info->abuseaddresses)"}
             {$parsed = parse_url($info->abuseaddresses[0])}
             {if="$parsed['scheme'] == 'xmpp'"}
@@ -383,6 +378,12 @@
                 </div>
             </li>
         {/if}
+        <li onclick="Chat_ajaxClearHistory('{$contact->id|echapJS}')">
+            <span class="primary icon"></span>
+            <div>
+                <p class="normal line">{$c->__('chat.clear_history')}</p>
+            </div>
+        </li>
         <hr />
         {if="$c->me->isBlocked($contact)"}
             <li onclick="ChatActions_ajaxUnblock('{$contact->id|echapJS}')">

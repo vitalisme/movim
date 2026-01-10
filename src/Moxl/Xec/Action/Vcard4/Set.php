@@ -14,12 +14,12 @@ class Set extends Action
     public function request()
     {
         $this->store();
-        Vcard4::set($this->_data, $this->_withPublishOption);
+        $this->iq(Vcard4::set($this->_data, $this->_withPublishOption), type: 'set');
     }
 
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
-        $this->pack(me()->id);
+        $this->pack($this->me->id);
         $this->deliver();
     }
 
@@ -35,7 +35,7 @@ class Set extends Action
 
     public function errorConflict(string $errorId, ?string $message = null)
     {
-        $config = new SetConfig;
+        $config = new SetConfig($this->me);
         $config->setNode(Vcard4::$node)
                ->setData(Vcard4::$nodeConfig)
                ->request();

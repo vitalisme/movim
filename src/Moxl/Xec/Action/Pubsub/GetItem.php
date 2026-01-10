@@ -14,21 +14,20 @@ class GetItem extends Action
     protected $_node;
     protected $_id;
     protected ?int $_replypostid = null;
+    protected bool $fromPayload = false;
 
-    protected $_manual = false; // Use when we explicitely request an item
     protected $_parentid;
-
     protected $_messagemid;
 
     public function request()
     {
         $this->store();
-        Pubsub::getItem($this->_to, $this->_node, $this->_id);
+        $this->iq(Pubsub::getItem($this->_node, $this->_id), to: $this->_to, type: 'get');
     }
 
-    public function setManual()
+    public function fromPayload()
     {
-        $this->_manual = true;
+        $this->fromPayload = true;
         return $this;
     }
 
@@ -68,11 +67,11 @@ class GetItem extends Action
                         $this->event('post_comment_published');
                     } else {
                         $this->pack($p->id);
-                        $this->event('post');
+                        $this->event($this->fromPayload ? 'post' : 'post_refreshed');
                     }
 
                     if ($this->_messagemid) {
-                        $message = me()->messages()->where('mid', $this->_messagemid)->first();
+                        $message = $this->me->messages()->where('mid', $this->_messagemid)->first();
 
                         if ($message) {
                             $message->postid = $p->id;
@@ -105,7 +104,7 @@ class GetItem extends Action
             }
             // Don't handle the case if we try to retrieve the avatar
         } elseif ($this->_id != Avatar::NODE_METADATA) {
-            $pd = new PostDelete;
+            $pd = new PostDelete($this->me);
             $pd->setTo($this->_to)
                 ->setNode($this->_node)
                 ->setId($this->_id);
@@ -132,7 +131,7 @@ class GetItem extends Action
 
     public function errorServiceUnavailable(string $errorId, ?string $message = null)
     {
-        $pd = new PostDelete;
+        $pd = new PostDelete($this->me);
         $pd->setTo($this->_to)
             ->setNode($this->_node)
             ->setId($this->_id);

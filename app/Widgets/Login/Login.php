@@ -45,7 +45,7 @@ class Login extends Base
 
         //if ($session->get('mechanism') != 'ANONYMOUS') {
         // We get the configuration
-        (new Get)->request();
+        $this->xmpp(new Get)->request();
         //}
     }
 
@@ -61,7 +61,7 @@ class Login extends Base
 
     public function onConfig(Packet $packet)
     {
-        $p = new Presence;
+        $p = new Presence($this->me);
         $p->start();
 
         $this->rpc('MovimUtils.reloadThis');
@@ -191,12 +191,12 @@ class Login extends Base
         $this->doLogin($username, $password, $timezone);
     }
 
-    public function ajaxHTTPLogin($login, $password, string $timezone)
+    public function ajaxHTTPLogin(string $login, string $password, string $timezone)
     {
         $this->doLogin($login, $password, $timezone);
     }
 
-    public function ajaxQuickLogin($deviceId, $login, $key, string $timezone, ?bool $check = false)
+    public function ajaxQuickLogin(string $deviceId, string $login, string $key, string $timezone, ?bool $check = false)
     {
         $validateLogin = Validator::stringType()->length(1, 254);
 
@@ -231,7 +231,7 @@ class Login extends Base
         }
     }
 
-    private function doLogin($login, $password, string $timezone, bool $deviceId = false)
+    private function doLogin(string $login, string $password, string $timezone, bool $deviceId = false)
     {
         $configuration = Configuration::get();
 
@@ -290,8 +290,8 @@ class Login extends Base
         $s->loadTimezone();
         $s->save();
 
-        // Force reload the User to link the new session
-        \App\User::me(true);
+        global $linker; // Todo, use a Linker Manager later
+        $linker->attachUser(User::where('id', $login)->first());
 
         // We launch the XMPP socket
         $this->rpc('register', $host);

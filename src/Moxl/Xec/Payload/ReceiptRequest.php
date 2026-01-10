@@ -2,6 +2,8 @@
 
 namespace Moxl\Xec\Payload;
 
+use Moxl\Stanza\Message;
+
 class ReceiptRequest extends Payload
 {
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
@@ -13,12 +15,17 @@ class ReceiptRequest extends Payload
             ? (string)$parent->{'origin-id'}->attributes()->id
             : (string)$parent->attributes()->id;
 
-        \Moxl\Stanza\Message::received(bareJid($from), $id, (string)$parent->attributes()->type);
+        $this->send(Message::maker(
+            to: bareJid($from),
+            id: $id,
+            type: (string)$parent->attributes()->type,
+            receipts: 'received'
+        ));
 
-        $message = me()->messages()
-                                  ->where('originid', $id)
-                                  ->where('jidfrom', bareJid($from))
-                                  ->first();
+        $message = $this->me->messages()
+            ->where('originid', $id)
+            ->where('jidfrom', bareJid($from))
+            ->first();
 
         if ($message && $message->delivered == null) {
             $message->delivered = gmdate('Y-m-d H:i:s');

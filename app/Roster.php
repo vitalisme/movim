@@ -7,14 +7,12 @@ use Movim\Model;
 
 class Roster extends Model
 {
+    use \Awobaz\Compoships\Compoships;
+
     public $incrementing = false;
     protected $primaryKey = ['session_id', 'jid'];
-    protected $fillable = ['jid', 'name', 'ask', 'subscription', 'group'];
-    public $with = ['contact', 'stories'];
-
-    protected $attributes = [
-        'session_id'    => SESSION_ID
-    ];
+    protected $fillable = ['session_id', 'jid', 'name', 'ask', 'subscription', 'group'];
+    public $with = ['contact'];
 
     public function upsert(): Roster
     {
@@ -39,54 +37,29 @@ class Roster extends Model
 
     public function session()
     {
-        return $this->hasOne('App\Session');
+        return $this->hasOne(Session::class);
     }
 
     public function contact()
     {
-        return $this->hasOne('App\Contact', 'id', 'jid');
+        return $this->hasOne(Contact::class, 'id', 'jid');
     }
 
     public function presences()
     {
-        return $this->hasMany('App\Presence', 'jid', 'jid')
-            ->where('resource', '!=', '')
-            ->where('session_id', $this->session_id);
+        return $this->hasMany(Presence::class, ['jid', 'session_id'], ['jid', 'session_id'])
+            ->where('resource', '!=', '');
     }
 
     public function presence()
     {
-        return $this->hasOne('App\Presence', 'jid', 'jid')
-            ->where('session_id', $this->session_id)
+        return $this->hasOne(Presence::class, ['jid', 'session_id'], ['jid', 'session_id'])
             ->orderBy('value');
     }
 
-    public function stories()
+    public function set(User $user, \SimpleXMLElement $stanza): bool
     {
-        return $this->hasMany('App\Post', 'server', 'jid')
-            ->myStories()
-            ->withOnly([])
-            ->withCount('myViews');
-    }
-
-    public function getFirstUnseenStoryAttribute(): ?Post
-    {
-        return $this->stories->filter(function ($story) {
-            return $story->my_views_count == 0;
-        })->first() ?? $this->stories->first();
-    }
-
-    public function getStoriesSeenAttribute(): bool
-    {
-        return !($this->stories && $this->stories->contains(function ($story) {
-            return $story->my_views_count == 0;
-        }));
-    }
-
-    public function set($stanza): bool
-    {
-        $this->session_id = SESSION_ID;
-
+        $this->session_id = $user->session->id;
         $this->jid = (string)$stanza->attributes()->jid;
 
         $this->name = (isset($stanza->attributes()->name)

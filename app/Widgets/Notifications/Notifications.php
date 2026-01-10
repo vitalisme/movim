@@ -25,6 +25,8 @@ class Notifications extends Base
         $this->addcss('notifications.css');
 
         $this->registerEvent('post', 'onPost');
+        $this->registerEvent('post_resolved', 'onPost');
+        $this->registerEvent('post_comment_published', 'onPost');
         $this->registerEvent('subscribe', 'onInvitations');
         $this->registerEvent('roster', 'onRoster');
         $this->registerEvent('roster_additem_handle', 'onInvitations');
@@ -61,7 +63,7 @@ class Notifications extends Base
 
             // Don't notify if the contact is not in stored already, for spam reasons
             if ($contact) {
-                Notif::append(
+                $this->notif(
                     key: 'invite|' . $from,
                     title: $contact->truename,
                     body: $this->__('invitations.wants_to_talk', $contact->truename),
@@ -83,12 +85,12 @@ class Notifications extends Base
         $this->me->save();
 
         $this->ajaxSetCounter();
-        (new Notif)->ajaxClear('comments');
+        (new Notif($this->me))->ajaxClear('comments');
     }
 
     public function ajaxSetCounter()
     {
-        $since = User::me(true)->notifications_since ?? date(MOVIM_SQL_DATE, 0);
+        $since = $this->me->notifications_since ?? date(MOVIM_SQL_DATE, 0);
 
         $count = \App\Post::whereIn('parent_id', function ($query) {
             $query->select('id')
@@ -119,17 +121,17 @@ class Notifications extends Base
 
     public function ajaxAdd($form)
     {
-        $r = new AddItem;
+        $r = $this->xmpp(new AddItem);
         $r->setTo((string)$form->searchjid->value)
           ->setName((string)$form->alias->value)
           ->setGroup((string)$form->group->value)
           ->request();
 
-        $p = new Subscribe;
+        $p = $this->xmpp(new Subscribe);
         $p->setTo((string)$form->searchjid->value)
           ->request();
 
-        (new Dialog)->ajaxClear();
+        (new Dialog($this->me))->ajaxClear();
     }
 
     public function ajaxDeleteContact($jid)
@@ -146,11 +148,11 @@ class Notifications extends Base
 
     public function ajaxDelete(string $jid)
     {
-        $r = new RemoveItem;
+        $r = $this->xmpp(new RemoveItem);
         $r->setTo($jid)
           ->request();
 
-        $p = new Unsubscribe;
+        $p = $this->xmpp(new Unsubscribe);
         $p->setTo($jid)
           ->request();
     }
@@ -165,18 +167,18 @@ class Notifications extends Base
              ->delete();
 
         if (!$roster) {
-            $r = new AddItem;
+            $r = $this->xmpp(new AddItem);
             $r->setTo($jid)
               ->request();
         }
 
         if (!$roster || $roster->subscription == 'none' || $roster->subscription == 'from') {
-            $p = new Subscribe;
+            $p = $this->xmpp(new Subscribe);
             $p->setTo($jid)
               ->request();
         }
 
-        $p = new Subscribed;
+        $p = $this->xmpp(new Subscribed);
         $p->setTo($jid)
           ->request();
 
@@ -186,12 +188,12 @@ class Notifications extends Base
     public function ajaxRefuse(string $jid)
     {
         if ($this->me->session->contacts()->where('jid', $jid)->exists()) {
-            $r = new RemoveItem;
+            $r = $this->xmpp(new RemoveItem);
             $r->setTo($jid)
                 ->request();
         }
 
-        $p = new Unsubscribed;
+        $p = $this->xmpp(new Unsubscribed);
         $p->setTo($jid)
             ->request();
 
@@ -202,7 +204,7 @@ class Notifications extends Base
 
     private function removeInvitation(string $jid)
     {
-        $n = new Notif;
+        $n = new Notif($this->me);
         $n->ajaxClear('invite|' . $jid);
 
         $this->rpc('MovimTpl.remove', '#invitation-' . cleanupId($jid));
@@ -227,7 +229,7 @@ class Notifications extends Base
             ->with('parent')
             ->get();
 
-        $since = User::me(true)->notifications_since ?? date(MOVIM_SQL_DATE, 0);
+        $since = $this->me->notifications_since ?? date(MOVIM_SQL_DATE, 0);
 
         $view = $this->tpl();
         $view->assign('hearth', addEmojis('♥'));

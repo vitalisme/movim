@@ -4,7 +4,6 @@ namespace Moxl\Xec\Action\Message;
 
 use Moxl\Xec\Action;
 use Moxl\Stanza\Message;
-use Moxl\Stanza\Muc;
 
 class Reactions extends Action
 {
@@ -17,12 +16,13 @@ class Reactions extends Action
     public function request()
     {
         $this->store();
-
-        if ($this->_muc) {
-            Muc::message($this->_to, false, false, $this->_id, false, null, $this->_parentid, $this->_reactions);
-        } else {
-            Message::simpleMessage($this->_to, false, false, $this->_id, false, null, $this->_parentid, $this->_reactions);
-        }
+        $this->send(Message::maker(
+            to: $this->_to,
+            id: $this->_id,
+            type: $this->_muc ? 'groupchat' : 'chat',
+            parentId: $this->_parentid,
+            reactions: $this->_reactions
+        ));
     }
 
     public function setReactions(array $reactions)
@@ -40,7 +40,7 @@ class Reactions extends Action
     public function handle(?\SimpleXMLElement $stanza = null, ?\SimpleXMLElement $parent = null)
     {
         if ($this->_muc) {
-            $m = new \Moxl\Xec\Payload\Message;
+            $m = new \Moxl\Xec\Payload\Message($this->me);
             $m->handle($stanza, $parent);
         }
     }
