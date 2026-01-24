@@ -43,7 +43,7 @@
     {/if}
     <div>
         {if="$post->isBrief()"}
-            <p class="line {if="!$post->isStory()"}normal brief two{/if}" title="{$post->title}">
+            <p class="line {if="!$post->isStory()"}brief two{/if}" title="{$post->title}">
                 {autoescape="off"}
                     {$post->title}
                 {/autoescape}
@@ -62,16 +62,12 @@
                     <img src="{$post->contact->getPicture()}">
                 </span>
             {/if}
-            <a href="#" onclick="MovimUtils.reload('{$c->route('contact', $post->aid)}')">
-                {$post->truename}
-            </a>
 
             {if="!$post->isMicroblog()"}
                 <a class="node"
                 title="{$post->server} / {$post->node}"
                 href="#"
                 onclick="MovimUtils.reload('{$c->route('community', [$post->server, $post->node])}')">
-                {if="$post->contact"}•{/if}
                 {$post->node}
                 </a>
             {/if}
@@ -94,10 +90,8 @@
 
                 {$count = $post->comments->count()}
                 {if="$count > 0"}
-                    {$count} <i class="material-symbols">chat_bubble_outline</i> •
+                    {$count} <i class="material-symbols">chat_bubble_outline</i>
                 {/if}
-
-                {$c->prepareDate($post->published, true)}
             </span>
         </p>
     </div>

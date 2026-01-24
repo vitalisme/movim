@@ -1,3 +1,4 @@
+{if="$fingerprints->isNotEmpty()"}
 <form>
     <div>
         <ul class="list middle">
@@ -23,7 +24,7 @@
                         </div>
                     </span>
                     <div>
-                        <p class="normal">
+                        <p>
                             <span class="fingerprint" title="{$value->bundleid}">
                                 {$value->fingerprint}
                             </span>
@@ -39,3 +40,11 @@
         </ul>
     </div>
 </form>
+{else}
+<ul class="thick">
+    <div class="placeholder">
+        <i class="material-symbols">fingerprint</i>
+        <h1>{$c->__('omemo.fingerprints')}</h1>
+    </li>
+</ul>
+{/if}

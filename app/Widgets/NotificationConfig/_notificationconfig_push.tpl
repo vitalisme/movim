@@ -31,7 +31,7 @@
                         </div>
                     </span>
                     <div>
-                        <p class="normal">
+                        <p>
                             {if="$value->activity_at"}
                                 <span class="info">{$c->__('omemo.last_activity')}: {$c->prepareDate($value->activity_at)}</span>
                             {/if}
@@ -45,4 +45,9 @@
         </ul>
     </div>
 </form>
+{else}
+<div class="placeholder">
+    <i class="material-symbols">notifications</i>
+    <h1>{$c->__('notificationconfig.push_subscriptions')}</h1>
+</div>
 {/if}

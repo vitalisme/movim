@@ -22,7 +22,7 @@
             {$storiesCount = $c->me->rosterStories($roster)->count()}
             {if="$roster->presence"}status {$roster->presence->presencekey}{/if}
             {if="$storiesCount > 0"}stories
-                {if="$roster"}seen{/if}
+                {if="$c->me->rosterStoriesAllSeen($roster)"}seen{/if}
             {/if}
         {/if}
     "
@@ -37,7 +37,7 @@
     </span>
 
     <div>
-        <p class="normal line">
+        <p class="line">
             {if="isset($message)"}
                 <span class="info">
                     {$c->prepareDate($message->published, true)}

@@ -17,7 +17,7 @@
                     </div>
                 </span>
                 <div>
-                    <p class="normal line">{$c->__('config.audio_call')}</p>
+                    <p class="line">{$c->__('config.audio_call')}</p>
                 </div>
             </li>
             <li>
@@ -35,7 +35,7 @@
                     </div>
                 </span>
                 <div>
-                    <p class="normal line">{$c->__('config.audio_chat')}</p>
+                    <p class="line">{$c->__('config.audio_chat')}</p>
                 </div>
             </li>
         </ul>
@@ -154,7 +154,9 @@
                             id="nightmode"
                             onchange="Config.switchNightMode()"
                             name="nightmode"/>
-                        <label for="nightmode"></label>
+                        <label for="nightmode">
+                            <i class="material-symbols">night_sight_auto</i>
+                        </label>
                     </div>
                 </span>
                 <div>

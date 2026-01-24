@@ -1,6 +1,5 @@
-<article class="block">
-<header>
-    {if="!$public"}
+{if="!$public"}
+    <header>
         <ul class="list middle">
             <li>
                 <span class="primary icon gray active" onclick="history.back();">
@@ -23,17 +22,17 @@
                 {/if}
 
                 <div>
-                    <p class="line" title="{$post->title}">
+                    <h3 class="line" title="{$post->title}">
                         {autoescape="off"}
                             {$post->title}
                         {/autoescape}
-                    </p>
+                    </h3>
                 </div>
             </li>
         </ul>
-    {/if}
-</header>
-
+    </header>
+{/if}
+<article class="block">
 {if="($public && $post->open) || !$public"}
     <ul class="list thick">
         <li>
@@ -80,7 +79,7 @@
             {/if}
             <div>
                 {if="!$post->isBrief()"}
-                    <p {if="$post->title != null"}title="{$post->title|strip_tags}"{/if}>
+                    <p class="all" {if="$post->title != null"}title="{$post->title|strip_tags}"{/if}>
                         {autoescape="off"}
                             {$post->title|addHashtagsLinks|addEmojis}
                         {/autoescape}
@@ -130,7 +129,7 @@
                     {/if}
                 </p>
                 {if="$post->isBrief()"}
-                    <p class="normal brief">
+                    <p class="brief all">
                         {autoescape="off"}
                             {$post->title|addUrls|addHashtagsLinks|nl2br|prepareString|addEmojis}
                         {/autoescape}
@@ -180,7 +179,7 @@
             {/loop}
         {/if}
         {autoescape="off"}
-            {$post->getContent(true)}
+            {$post->getContent(true, $public)}
         {/autoescape}
     </div>
 </section>
@@ -198,7 +197,7 @@
         <ul class="list">
             <li>
                 <div>
-                    <p class="normal">
+                    <p>
                         {loop="$post->tags()->get()"}
                             <a class="chip outline active" href="#" onclick="MovimUtils.reload('{$c->route('tag', $value->name)}')">
                                 <i class="material-symbols icon gray">tag</i>{$value->name}
@@ -223,7 +222,7 @@
                     <i class="material-symbols">open_in_new</i>
                 </span>
                 <div>
-                    <p class="line normal">
+                    <p class="line">
                         {$c->__('post.public_yes')}
                     </p>
                     <p class="line">

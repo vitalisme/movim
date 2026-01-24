@@ -43,6 +43,7 @@ class Bootstrap
         //Check if vital system need is OK
         $this->checkSystem();
         $session = $this->checkSession();
+        $this->loadTimezone($session);
         $this->loadLanguage($session);
 
         return $session;
@@ -139,6 +140,13 @@ class Bootstrap
         }
 
         return $uri;
+    }
+
+    private function loadTimezone(?Session $session)
+    {
+        if ($session) {
+            define('SESSION_TIMEZONE', $session->timezone);
+        }
     }
 
     private function loadCapsule()
@@ -250,7 +258,6 @@ class Bootstrap
         // Return a list of interesting widgets to load (to save memory)
         return [
             'Account',
-            'AccountNext',
             'AdHoc',
             'Avatar',
             'Blocked',
@@ -289,6 +296,7 @@ class Bootstrap
             'Presence',
             'Publish',
             'PublishStories',
+            'Register',
             'Rooms',
             'RoomsExplore',
             'RoomsUtils',

@@ -83,7 +83,7 @@ class Visio extends Base
     {
         $currentCall = $this->currentCall();
 
-        if ($currentCall->isStarted()) {
+        if ($currentCall && $currentCall->isStarted()) {
             $st = $this->xmpp(new SessionTerminate);
             $st->setTo($currentCall->jid)
                 ->setJingleSid($currentCall->id)
@@ -110,7 +110,7 @@ class Visio extends Base
 
     public function onCallInviteRetract(Packet $packet)
     {
-        $this->rpc('MovimVisio.clear');
+        $this->ajaxClear();
     }
 
     public function onExternalServices(Packet $packet)
@@ -243,7 +243,7 @@ class Visio extends Base
 
         $this->toast($this->__('visio.ended'));
 
-        $this->rpc('MovimVisio.clear');
+        $this->ajaxClear();
         $this->rpc('MovimJingles.onTerminate', \bareJid($packet->from));
     }
 
@@ -316,6 +316,11 @@ class Visio extends Base
     public function onUnmute(Packet $packet)
     {
         $this->rpc('MovimJingles.onUnmute', \bareJid($packet->from), $packet->content);
+    }
+
+    public function ajaxClear()
+    {
+        $this->rpc('MovimVisio.clear');
     }
 
     public function ajaxPropose(string $to, string $id, ?bool $withVideo = false)

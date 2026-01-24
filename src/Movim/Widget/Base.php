@@ -169,7 +169,7 @@ class Base
      * @param timestamp $string
      * @return string
      */
-    function prepareDate(string $datetime = '', bool $compact = false, bool $hours = true, bool $dateOnly = false): string
+    function prepareDate(string $datetime = '', bool $compact = false, bool $hours = true): string
     {
         $time = strtotime($datetime);
         $time = $time !== false ? $time : time();
@@ -207,10 +207,6 @@ class Base
             }
         }
 
-        if ($dateOnly) {
-            return $date;
-        }
-
         //if $hours option print the time
         if ($hours) {
             if ($date != '') {
@@ -240,6 +236,8 @@ class Base
 
     private function resolveTimezone(): string
     {
+        if (defined('SESSION_TIMEZONE')) return SESSION_TIMEZONE;
+
         return $this->sessionId
             ? linker($this->sessionId)->timezone ?? date_default_timezone_get()
             : 'UTC';
