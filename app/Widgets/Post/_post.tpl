@@ -2,7 +2,8 @@
     <header>
         <ul class="list middle">
             <li>
-                <span class="primary icon gray active" onclick="history.back();">
+                <span class="on_mobile primary icon gray active" onclick="history.back();"
+                    id="postcounter" {if="$counter > 0"}data-counter="{$counter}"{/if}>
                     <i class="material-symbols">arrow_back</i>
                 </span>
 
@@ -197,7 +198,7 @@
         <ul class="list">
             <li>
                 <div>
-                    <p>
+                    <p class="all">
                         {loop="$post->tags()->get()"}
                             <a class="chip outline active" href="#" onclick="MovimUtils.reload('{$c->route('tag', $value->name)}')">
                                 <i class="material-symbols icon gray">tag</i>{$value->name}

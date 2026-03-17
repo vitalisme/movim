@@ -144,16 +144,20 @@ var Chat = {
         Chat.toggleAction();
     },
     get: function (jid, light) {
-        if (jid != undefined) {
-            MovimTpl.showPanel();
-            document.querySelector('#chat_widget').innerHTML = '';
-            Chats.setActive(jid);
-        } else {
-            Chats.clearAllActives();
-            Rooms.clearAllActives();
-        }
+        if (MovimUtils.urlParts().page == 'chat') {
+            if (jid != undefined) {
+                MovimTpl.showPanel();
+                document.querySelector('#chat_widget').innerHTML = '';
+                Chats.setActive(jid);
+            } else {
+                Chats.clearAllActives();
+                Rooms.clearAllActives();
+            }
 
-        Chat_ajaxGet(jid, light);
+            Chat_ajaxGet(jid, light);
+        } else if (MovimUtils.urlParts().page == 'space' && MovimUtils.isMobile()) {
+            MovimTpl.hidePanel();
+        }
     },
     getPresences: function (room) {
         if (!MovimUtils.isMobile()) {
@@ -163,7 +167,7 @@ var Chat = {
     getRoom: function (jid) {
         MovimTpl.showPanel();
         document.querySelector('#chat_widget').innerHTML = '';
-        Rooms.setActive(jid);
+        if (typeof Rooms != 'undefined') Rooms.setActive(jid);
 
         Chat_ajaxGetRoom(jid);
     },
@@ -1529,7 +1533,7 @@ var Chat = {
         let div = null;
         let p = null;
 
-        if (body.includes('&gt; ')) {
+        if (!body.startsWith('<code ') && body.includes('&gt; ')) {
             body.split("\n").forEach(line => {
                 if (line.startsWith('&gt; ') || line == '&gt;') {
                     p = null;
@@ -1710,6 +1714,19 @@ var Chat = {
             );
         }
     },
+    searchMembers : function(key) {
+        var selector = '#room_nav_members > li';
+
+        document.querySelectorAll(selector)
+            .forEach(item => item.classList.remove('found'));
+
+        var founds = document.querySelectorAll(
+            selector + '[name*="' + MovimUtils.cleanupId(key).slice(3) + '"]'
+        );
+
+        console.log(founds)
+        founds.forEach(item => item.classList.add('found'));
+    }
 };
 
 MovimWebsocket.attach(function () {
@@ -1732,7 +1749,9 @@ MovimWebsocket.attach(function () {
             Chat_ajaxHttpGetEmpty();
         }
 
-        Notif.current('chat');
+        if (MovimUtils.urlParts().page == 'chat') {
+            Notif.current('chat');
+        }
     }
 });
 
@@ -1760,14 +1779,15 @@ MovimEvents.registerWindow('loaded', 'chat', () => {
 
     if (typeof Upload != 'undefined') {
         Upload.initiate((file) => {
-            if (MovimUtils.urlParts().page == 'chat'
+            if (['chat', 'space'].includes(MovimUtils.urlParts().page)
                 && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
+                    console.log('GNAP')
                 Upload.prependName = 'chat';
             }
         });
 
         Upload.attach((file) => {
-            if (MovimUtils.urlParts().page == 'chat'
+            if (['chat', 'space'].includes(MovimUtils.urlParts().page)
                 && (typeof (PublishStories) == 'undefined' || PublishStories.main == undefined)) {
                 Chat_ajaxHttpDaemonSendMessage(
                     Chat.getTextarea().dataset.jid,
@@ -1778,7 +1798,6 @@ MovimEvents.registerWindow('loaded', 'chat', () => {
             }
         });
     }
-
 
     // Really early panel showing in case we have a JID
     var parts = MovimUtils.urlParts();

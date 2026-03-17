@@ -3,9 +3,10 @@
 <?php $this->widget('Onboarding');?>
 <?php $this->widget('Notifications');?>
 
-<nav>
+<nav class="on_desktop">
     <?php $this->widget('Presence');?>
     <?php $this->widget('Shortcuts');?>
+    <?php $this->widget('SpacesMenu');?>
     <?php $this->widget('Navigation');?>
 </nav>
 

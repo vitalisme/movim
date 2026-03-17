@@ -207,8 +207,7 @@ class Wrapper
                             is_array($widget->filters)
                             && array_key_exists($key . '_' . $method, $widget->filters)
                         ) {
-                            $session = linker($sessionId)->session;
-                            $notifsKey = $session->get('notifs_key');
+                            $notifsKey = linker($sessionId)->session->get('notifs_key');
 
                             if ($notifsKey == 'blurred') {
                                 $this->callWidget($widget, $method, $packet);
@@ -216,7 +215,18 @@ class Wrapper
                                 $explode = explode('|', $notifsKey);
                                 $notifKey = reset($explode);
 
-                                if ($notifKey == $widget->filters[$key . '_' . $method]) {
+                                $wildcardFilter = false;
+                                foreach ($widget->filters[$key . '_' . $method] as $filter) {
+                                    if (
+                                        substr($filter, -1) == '*'
+                                        && substr($notifKey, 0, mb_strlen($filter) - 1) == substr($filter, 0, -1)
+                                    ) {
+                                        $wildcardFilter = true;
+                                        break;
+                                    }
+                                }
+
+                                if ($wildcardFilter || in_array($notifKey, $widget->filters[$key . '_' . $method])) {
                                     $this->callWidget($widget, $method, $packet);
                                 }
                             }

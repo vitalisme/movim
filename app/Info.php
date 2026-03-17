@@ -31,6 +31,7 @@ class Info extends Model
             && empty($this->freshIdentities)
             && !$this->isDirty('avatarhash')
         ) return;
+
         try {
             unset($this->identities);
             parent::save($options);
@@ -61,6 +62,11 @@ class Info extends Model
         return $query->whereHas('identities', function ($query) use ($type) {
             $query->where('type', $type);
         });
+    }
+
+    public function scopeSpace($query)
+    {
+        return $query->where('type', 'urn:xmpp:spaces:0');
     }
 
     public function scopeRestrictUserHost($query, User $user)
@@ -243,9 +249,9 @@ class Info extends Model
         return $identityType ? $identityType->type : null;
     }
 
-    public function getPicture(\Movim\ImageSize $size = \Movim\ImageSize::M): string
+    public function getPicture(\Movim\ImageSize $size = \Movim\ImageSize::M, ?string $placeholder = null): string
     {
-        return getPicture($this->attributes['avatarhash'] ?? null, $this->node, $size);
+        return getPicture($this->attributes['avatarhash'] ?? null, $placeholder ?? $this->node, $size);
     }
 
     public function getDeviceIcon()
@@ -325,7 +331,7 @@ class Info extends Model
         return $this->hasFeature('urn:xmpp:extdisco:2');
     }
 
-    public function set($query, $node = false, $parent = false)
+    public function set($query, ?string $node = null, $parent = false)
     {
         $from = (string)$query->attributes()->from;
 
@@ -341,7 +347,7 @@ class Info extends Model
              * - bitlbee
              * - jtalk
              */
-            if (empty($this->node) && $node != false) {
+            if (empty($this->node) && $node != null) {
                 $this->node = $node;
             }
 
@@ -526,7 +532,7 @@ class Info extends Model
 
     public function getPubsubRoles()
     {
-        $roles = ['owner' => __('affiliation.owner'), 'none' =>  __('affiliation.no-aff')];
+        $roles = ['owner' => __('affiliation.owner'), 'none' =>  __('affiliation.no_aff')];
 
         $features = unserialize($this->attributes['features']);
 

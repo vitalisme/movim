@@ -45,12 +45,12 @@ input::placeholder, textarea::placeholder, select::placeholder {
     color: rgba(var(--movim-font), 0.67);
 }
 
-ul.list li.divided,
-ul.list li.divided.spaced:after,
+ul.list li.divided:after,
+*.divided:not(.spaced):not(li)>*:not(:last-child):not(.subheader):after,
+*.divided.spaced > *:not(:last-child):after,
 hr:not(.clear),
 .card > .block:not(.subheader):not(.simple),
-*.divided > *:not(:last-child),
-*.divided.spaced > *:not(:last-child):after {
+*.divided > *:not(:last-child) {
     border-color: rgba(var(--movim-font), 0.12);
 }
 

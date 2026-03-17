@@ -1,5 +1,6 @@
 <?php
 
+use App\Subscription;
 use App\Workers\AvatarHandler\AvatarHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
@@ -66,8 +67,8 @@ function logDebug($logs)
  */
 function linker(string $sid): ?Linker
 {
-    global $linkerManager;
-    return $linkerManager->linker($sid);
+    global $linkersManager;
+    return $linkersManager->linker($sid);
 }
 
 /**
@@ -213,6 +214,13 @@ function requiredExtensions(): array
         'xml',
     ];
 
+    // These are included in PHP on most platforms,
+    // but FreeBSD provides them as extensions still
+    if (php_uname('s') == 'FreeBSD') {
+        array_push($extensions, 'filter');
+        array_push($extensions, 'zlib');
+        array_push($extensions, 'zip');
+    }
     // ext-json is included in PHP since 8.0
     if (version_compare(PHP_VERSION, '8.0.0') < 0) {
         array_push($extensions, 'json');
@@ -310,7 +318,7 @@ function getXepNamespace()
         '0308' => ['name' => 'Last Message Correction', 'category' => 'chat',      'ns' => 'urn:xmpp:message-correct:0'],
         '0320' => ['name' => 'Use of DTLS-SRTP in Jingle Sessions', 'category' => 'jingle',     'ns' => 'urn:xmpp:jingle:apps:dtls:0'],
         '0327' => ['name' => 'Rayo', 'category' => 'rayo',       'ns' => 'urn:xmpp:rayo:0'],
-        '0330' => ['name' => 'Pubsub Subscription',    'category' => 'social',     'ns' => 'urn:xmpp:pubsub:subscription'],
+        '0330' => ['name' => 'Pubsub Subscription',    'category' => 'social',     'ns' => Subscription::PUBLIC_NODE],
         '0332' => ['name' => 'HTTP over XMPP transport', 'category' => 'client',   'ns' => 'urn:xmpp:http'],
         '0333' => ['name' => 'Chat Markers', 'category' => 'chat', 'ns' => 'urn:xmpp:chat-markers:0'],
         '0337' => ['name' => 'Event Logging over XMPP', 'category' => 'client',    'ns' => 'urn:xmpp:eventlog'],
@@ -622,6 +630,19 @@ function getPresenceAffiliations()
         'member' => __('room.affiliation_members'),
     ];
 }
+
+function getAffiliations()
+{
+    return [
+        'owner' => __('affiliation.owner'),
+        'admin' => __('affiliation.admin'),
+        'publisher' => __('affiliation.publisher'),
+        'publisher-only' => __('affiliation.publish-only'),
+        'member' => __('affiliation.member'),
+        'outcast' => __('affiliation.outcast'),
+    ];
+}
+
 
 /**
  * Map the XMPP form vars to Material Symbols
@@ -1068,4 +1089,59 @@ function base64ToFingerPrint(string $base64): string
     $buffer = base64_decode($base64);
     $hex = unpack('H*', $buffer);
     return implode(' ', str_split(substr($hex[1], 2), 8));
+}
+
+/**
+ * @desc Return a Material Symbols icon name for a given mimetype
+ */
+function mimeToIcon(string $type): string
+{
+    return match (true) {
+        $type === 'application/pdf'
+        => 'picture_as_pdf',
+        (bool)preg_match('/^application\/(zip|x-zip|x-tar|x-rar|x-7z|gzip|x-bzip)/', $type)
+        => 'folder_zip',
+        (bool)preg_match('/^application\/(msword|vnd\.oasis\.opendocument\.text|vnd\.openxmlformats-officedocument\.wordprocessingml)/', $type)
+        => 'description',
+        (bool)preg_match('/^application\/(vnd\.ms-excel|vnd\.oasis\.opendocument\.spreadsheet|vnd\.openxmlformats-officedocument\.spreadsheetml)/', $type)
+        => 'table_chart',
+        (bool)preg_match('/^application\/(vnd\.ms-powerpoint|vnd\.oasis\.opendocument\.presentation|vnd\.openxmlformats-officedocument\.presentationml)/', $type)
+        => 'slideshow',
+        (bool)preg_match('/^text\/(html|xml|css|javascript)/', $type),
+        (bool)preg_match('/^application\/(json|xml|javascript)/', $type)
+        => 'code',
+        (bool)preg_match('/^text\//', $type)
+        => 'article',
+        typeIsAudio($type) => 'audio_file',
+        typeIsVideo($type) => 'video_file',
+        typeIsPicture($type) => 'image',
+        default => 'insert_drive_file',
+    };
+}
+
+/**
+ * @desc Return a short uppercase label from a mimetype (such as 'application/pdf' -> 'PDF')
+ */
+function mimeToLabel(string $type): string
+{
+    $subtype = explode('/', $type)[1] ?? '';
+
+    return strtoupper(match (true) {
+        $type === 'application/pdf' => 'pdf',
+        str_starts_with($subtype, 'vnd.openxmlformats-officedocument.wordprocessingml') => 'docx',
+        str_starts_with($subtype, 'vnd.openxmlformats-officedocument.spreadsheetml') => 'xlsx',
+        str_starts_with($subtype, 'vnd.openxmlformats-officedocument.presentationml') => 'pptx',
+        str_starts_with($subtype, 'vnd.oasis.opendocument.text') => 'odt',
+        str_starts_with($subtype, 'vnd.oasis.opendocument.spreadsheet') => 'ods',
+        str_starts_with($subtype, 'vnd.oasis.opendocument.presentation') => 'odp',
+        str_starts_with($subtype, 'vnd.ms-excel') => 'xls',
+        str_starts_with($subtype, 'vnd.ms-powerpoint') => 'ppt',
+        $subtype === 'x-tar' => 'tar',
+        $subtype === 'x-7z-compressed' => '7z',
+        $subtype === 'x-bzip2' => 'bz2',
+        $subtype === 'x-rar' => 'rar',
+        $subtype === 'x-zip' => 'zip',
+        $subtype === 'msword' => 'doc',
+        default => $subtype,
+    });
 }

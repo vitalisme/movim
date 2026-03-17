@@ -14,6 +14,12 @@ v0.33 (master)
 * Move all the XMPP related code to a Linker class
 * Inject the User context in the Widgets, Moxl Actions and Moxl Payloads
 * Upgrade to Twemoji 17.0.2
+* Rely on Carbon for the dates
+* Optimize page loading
+* Implement XEP-0507: Jingle Content Category
+* Enable audio sharing (when available) when doing screen sharing, refactor the jingle contents handling
+* Add a maxsessions admin setting to limit the maximum amount of connected sessions on the instance
+* Spaces (and everything related)
 
 v0.32.1
 ---------------------------

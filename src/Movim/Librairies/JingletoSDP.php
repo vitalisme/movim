@@ -96,6 +96,7 @@ class JingletoSDP
             $mediaHeaderLastIp = null;
 
             $sdpMedia = '';
+            $categories = [];
 
             $this->name = (string)$content->attributes()->name;
 
@@ -234,6 +235,10 @@ class JingletoSDP
                                     $s->attributes()->name . ':' .
                                     $s->attributes()->value;
                             }
+                            break;
+
+                        case 'category':
+                            array_push($categories, (string)$payload->attributes()->name);
                             break;
                     }
                     // TODO sendrecv ?
@@ -404,6 +409,10 @@ class JingletoSDP
 
                 if ($this->name !== null) {
                     $sdpMedias .= "\r\na=mid:" . $this->name;
+                }
+
+                if (!empty($categories)) {
+                    $sdpMedias .= "\r\na=content:" . implode(',', $categories);
                 }
 
                 if ($content->attributes()->senders) {

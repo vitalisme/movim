@@ -119,7 +119,7 @@
                     {/if}
                     type="email"
                     list="suggestions"
-                    oninput="Rooms.suggest()"
+                    oninput="Rooms.cleanId(this); Rooms.suggest()"
                     required />
                 <label>{$c->__('chatrooms.id')}</label>
             </div>
@@ -161,7 +161,7 @@
                     </option>
                     <option value="on-mention" {if="isset($conference) && $conference->notify == 1"}selected{/if}
                         {if="!isset($conference)"}selected{/if}>
-                        {$c->__('room.notify_quoted')}
+                        {$c->__('room.notify_mentioned')}
                     </option>
                     <option value="always" {if="isset($conference) && $conference->notify == 2"}selected{/if}>
                         {$c->__('room.notify_always')}
@@ -189,8 +189,7 @@
                         </div>
                     </span>
                     <div>
-                        <p></p>
-                        <p>{$c->__('chatrooms.autojoin')}</p>
+                        <p class="all">{$c->__('chatrooms.autojoin')}</p>
                     </div>
                 </li>
             </ul>

@@ -15,7 +15,7 @@ use Movim\RPC;
 use Movim\Widget\Wrapper;
 use Moxl\Authentication;
 use Moxl\Parser;
-
+use Moxl\Xec\Payload\Packet;
 use React\Dns\Model\Message;
 use React\Dns\Resolver\ResolverInterface;
 use React\Socket\Connection;
@@ -46,7 +46,7 @@ class Linker
     private ?string $timestampReceive = null;
 
     public function __construct(
-        private LinkerManager $linkerManager,
+        private LinkersManager $linkersManager,
         private ResolverInterface $dns,
         private string $sessionId,
         private string $browserLocale
@@ -73,6 +73,10 @@ class Linker
                 $this->logout();
             }
         });
+
+        $message = new \StdClass;
+        $message->func = 'started';
+        $this->writeOut($message);
     }
 
     public function attachUser(User $user)
@@ -153,9 +157,9 @@ class Linker
         }
     }
 
-    function writeOut($message = null)
+    function writeOut(\stdClass $message)
     {
-        $this->linkerManager->sendWebsocket($this->sessionId, $message);
+        $this->linkersManager->sendWebsocket($this->sessionId, $message);
     }
 
     private function xmppBehaviour(Connection $connection)
@@ -164,7 +168,7 @@ class Linker
         Wrapper::getInstance()->iterate('socket_connected', user: $this->user, sessionId: $this->sessionId);
 
         if (config('daemon.verbose')) {
-            logOut(colorize('XMPP socket launched', 'yellow'), type: 'blue', sid: $this->sessionId);
+            logOut(colorize('XMPP socket launched', 'green'), sid: $this->sessionId);
         }
 
         $this->connection->on('data', function ($message) {
@@ -176,7 +180,6 @@ class Linker
 
                 if ($message == '</stream:stream>') {
                     $this->connection->close();
-                    $this->linkerManager->closeLinker($this->sessionId);
                 } elseif (
                     $message == "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
                     || $message == '<proceed xmlns="urn:ietf:params:xml:ns:xmpp-tls"/>'
@@ -196,15 +199,17 @@ class Linker
             }
         });
 
-        $this->connection->on('error', fn() => $this->linkerManager->closeLinker($this->sessionId));
-        $this->connection->on('close', fn() => $this->linkerManager->closeLinker($this->sessionId));
+        $this->connection->on('error', fn() => $this->linkersManager->closeLinker($this->sessionId));
+        $this->connection->on('close', fn() => $this->linkersManager->closeLinker($this->sessionId));
 
         // And we say that we are ready!
-        $obj = new \StdClass;
-        $obj->func = 'registered';
+        $message = new \stdClass;
+        $message->registered = true;
+        $this->writeOut($message);
 
-        fwrite(STDERR, 'registered');
-        $this->linkerManager->sendWebsocket($this->sessionId, $obj);
+        $message = new \stdClass;
+        $message->func = 'registered';
+        $this->writeOut($message);
     }
 
     private function handleClientDNS(array $results)
@@ -254,7 +259,7 @@ class Linker
                     'tls' => [
                         'SNI_enabled' => true,
                         'allow_self_signed' => false,
-                        'peer_name' => $host
+                        'peer_name' => $this->host
                     ]
                 ]),
                 $this->dns
@@ -264,7 +269,7 @@ class Linker
                 fn($connection) => $this->xmppBehaviour($connection),
                 function (\Exception $error) {
                     logOut(colorize($error->getMessage(), 'red'), sid: $this->sessionId);
-                    Wrapper::getInstance()->iterate('timeout_error'); // TODO give context
+                    Wrapper::getInstance()->iterate('connection_error', (new Packet)->pack($error->getMessage()), sessionId: $this->sessionId);
                 }
             );
         }
@@ -285,7 +290,7 @@ class Linker
             fn() => logOut(colorize('TLS enabled', 'blue'), sid: $this->sessionId),
             function ($error) {
                 logOut(colorize('TLS error ' . $error->getMessage(), 'blue'), sid: $this->sessionId);
-                Wrapper::getInstance()->iterate('ssl_error'); // TODO give context
+                Wrapper::getInstance()->iterate('ssl_error', sessionId: $this->sessionId); // TODO give context
                 $this->linkerManager->closeLinker($this->sessionId);
             }
         );

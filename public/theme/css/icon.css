@@ -85,6 +85,11 @@ span.icon.bubble img:not(.emoji) {
     border-radius: 5rem;
 }
 
+span.icon.bubble.space:not(:has(img)),
+span.icon.bubble.space img:not(.emoji) {
+    border-radius: 2rem;
+}
+
 span.icon.bubble>i,
 span.icon.bubble>a>i {
     font-size: 3rem;
@@ -241,7 +246,6 @@ span.icon[data-counter].symbol:after {
 span.icon.composing:after {
     content: '…';
     line-height: 1rem;
-    z-index: 1;
     font-size: 2rem;
     font-weight: bold;
     border-radius: 0.5rem;

@@ -3,15 +3,16 @@
 <?php $this->widget('Notifications');?>
 <?php $this->widget('SendTo');?>
 
-<nav>
+<nav class="on_desktop">
     <?php $this->widget('Presence');?>
     <?php $this->widget('Shortcuts');?>
+    <?php $this->widget('SpacesMenu');?>
     <?php $this->widget('Navigation');?>
 </nav>
 
 <?php $this->widget('BottomNavigation');?>
 
-<main style="background-color: rgb(var(--movim-background))">
+<main>
     <div class="large">
         <header>
             <ul class="list middle">

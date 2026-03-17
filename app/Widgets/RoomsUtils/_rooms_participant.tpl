@@ -57,12 +57,12 @@
                     <p></p>
                     <p class="all">
                         {if="$presence->mucaffiliation == 'owner'"}
-                            <span class="chip thin" title="{$c->__('room.affiliation_owner')}">
+                            <span class="chip thin" title="{$c->__('affiliation.owner')}">
                                 <i class="material-symbols icon fill yellow">star</i>
                                     {$presence->affiliationTxt}
                             </span>
                         {elseif="$presence->mucaffiliation == 'admin'"}
-                            <span class="chip thin" title="{$c->__('room.affiliation_owner')}">
+                            <span class="chip thin" title="{$c->__('affiliation.owner')}">
                                 <i class="material-symbols icon fill gray">star</i>
                                 {$presence->affiliationTxt}
                             </span>
@@ -88,6 +88,18 @@
                 <p>{$c->__('adhoc.title')}</p>
             </div>
         </li>
+        {if="$presence->mucjid != $c->me->id"}
+            <li onclick="Chats_ajaxOpen('{$presence->mucjid|echapJS}', true); Dialog_ajaxClear();">
+                <span class="primary icon gray">
+                    <i class="material-symbols">comment</i>
+                </span>
+                <div>
+                    <p class="line">
+                        {$c->__('button.chat')}
+                    </p>
+                </div>
+            </li>
+        {/if}
         <li onclick="Chat.quoteMUC('{$presence->resource}', true); Dialog_ajaxClear();">
             <span class="primary icon gray">
                 <i class="material-symbols">format_quote</i>

@@ -5,7 +5,6 @@ namespace App\Widgets\Rooms;
 use Moxl\Xec\Action\Disco\Request;
 use Moxl\Xec\Action\Presence\Muc;
 use Moxl\Xec\Action\Presence\Unavailable;
-use Moxl\Xec\Action\Muc\GetMembers;
 
 use Movim\Widget\Base;
 
@@ -159,6 +158,7 @@ class Rooms extends Base
     {
         foreach (
             $this->me->session->conferences()
+                ->fromSpace(false)
                 ->with('info')
                 ->where('bookmarkversion', (int)$packet->content)
                 ->get() as $room
@@ -188,6 +188,8 @@ class Rooms extends Base
     public function onBookmarkSet(Packet $packet)
     {
         $conference = $packet->content;
+
+        if ($conference->isFromSpace()) return;
 
         if ($conference && $conference->autojoin) {
             $this->ajaxJoin($conference->conference, $conference->nick);
@@ -225,6 +227,7 @@ class Rooms extends Base
     public function onPresence(string $room, bool $callSecond = true)
     {
         $conference = $this->me->session->conferences()
+            ->fromSpace(false)
             ->where('conference', $room)
             ->with('info', 'contact', 'presence')
             ->withCount('unreads', 'quoted', 'presences')
@@ -244,6 +247,7 @@ class Rooms extends Base
     public function ajaxHttpGet()
     {
         $conferences = $this->me->session->conferences()
+            ->fromSpace(false)
             ->with('info', 'contact', 'presence')
             ->withCount('unreads', 'quoted', 'presences')
             ->get();
@@ -269,7 +273,7 @@ class Rooms extends Base
      */
     public function ajaxJoin(string $room, ?string $nickname = null)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -303,10 +307,6 @@ class Rooms extends Base
             }
         }
 
-        $m = $this->xmpp(new GetMembers);
-        $m->setTo($room)
-            ->request();
-
         $p->setNickname($nickname);
         $p->request();
     }
@@ -318,7 +318,7 @@ class Rooms extends Base
      */
     public function ajaxExit($room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 

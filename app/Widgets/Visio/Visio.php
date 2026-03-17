@@ -261,12 +261,16 @@ class Visio extends Base
     public function onContentAdd(Packet $packet)
     {
         $jts = new JingletoSDP($packet->content);
+        $mids = [];
+        foreach ($packet->content->content as $content) {
+            array_push($mids, (string)$content->attributes()->name);
+        }
 
         $this->rpc(
             'MovimJingles.onContentAdd',
             \bareJid($packet->from),
             $jts->generate(),
-            (string)$packet->content->content->attributes()->name
+            $mids
         );
     }
 
@@ -285,12 +289,16 @@ class Visio extends Base
     public function onContentRemove(Packet $packet)
     {
         $jts = new JingletoSDP($packet->content);
+        $mids = [];
+        foreach ($packet->content->content as $content) {
+            array_push($mids, (string)$content->attributes()->name);
+        }
 
         $this->rpc(
             'MovimJingles.onContentRemove',
             \bareJid($packet->from),
             $jts->generate(),
-            (string)$packet->content->attributes()->name
+            $mids
         );
     }
 
@@ -390,11 +398,11 @@ class Visio extends Base
 
     /** Content */
 
-    public function ajaxContentAdd(string $to, string $sdp, string $id, string $mediaId)
+    public function ajaxContentAdd(string $to, string $sdp, string $id, array $mediaIds)
     {
         $stj = new SDPtoJingle(
             user: $this->me,
-            sdp: $this->filterSDPMedia($sdp, $mediaId),
+            sdp: $this->filterSDPMedia($sdp, $mediaIds),
             sid: $id,
             action: 'content-add'
         );
@@ -405,11 +413,11 @@ class Visio extends Base
             ->request();
     }
 
-    public function ajaxContentRemove(string $to, string $sdp, string $id, string $mediaId)
+    public function ajaxContentRemove(string $to, string $sdp, string $id, array $mediaIds)
     {
         $stj = new SDPtoJingle(
             user: $this->me,
-            sdp: $this->filterSDPMedia($sdp, $mediaId),
+            sdp: $this->filterSDPMedia($sdp, $mediaIds),
             sid: $id,
             action: 'content-remove'
         );
@@ -579,7 +587,10 @@ class Visio extends Base
     {
         $muji = $this->me->session->mujiCalls()->first();
 
-        $this->rpc('MovimVisio.init', $muji->jidfrom, $muji->jidfrom, $muji->id, $muji->video, true);
+        if ($muji) {
+            $this->rpc('MovimVisio.init', $muji->jidfrom, $muji->jidfrom, $muji->id, $muji->video, true);
+        }
+
     }
 
     public function ajaxMujiInit(string $mujiId, $sdp)
@@ -630,7 +641,7 @@ class Visio extends Base
 
             $muc = $this->xmpp(new Muc);
             $muc->setTo($mujiConferenceJid)
-                ->setNickname($conference->nickname)
+                ->setNickname($conference->nick)
                 ->enableCreate()
                 ->enableMujiPreparing()
                 ->noNotify()
@@ -848,15 +859,17 @@ class Visio extends Base
         }
     }
 
-    private function filterSDPMedia(string $sdp, string $mediaId)
+    private function filterSDPMedia(string $sdp, array $mediaIds)
     {
         // Ugly but simple
         $exp = explode('m=', $sdp);
         $selected = [];
 
         foreach ($exp as $media) {
-            if (str_contains($media, 'a=mid:' . $mediaId)) {
-                array_push($selected, $media);
+            foreach ($mediaIds as $mediaId) {
+                if (str_contains($media, 'a=mid:' . $mediaId)) {
+                    array_push($selected, $media);
+                }
             }
         }
 

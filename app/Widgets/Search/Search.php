@@ -12,7 +12,6 @@ use App\Post;
 use App\Contact;
 use App\Info;
 use App\Widgets\ContactActions\ContactActions;
-use App\Widgets\Drawer\Drawer;
 use App\Widgets\Post\Post as WidgetPost;
 use Moxl\Xec\Action\ExtendedChannelSearch\Search as RoomSearch;
 
@@ -24,14 +23,14 @@ class Search extends Base
         $this->addcss('search.css');
     }
 
-    public function ajaxRequest($chatroomActions = false)
+    public function ajaxRequest(?bool $chatroomActions = false, ?bool $articlesOnly = false)
     {
-        $view = $this->tpl();
+        $this->drawer('search', $this->view('_search', [
+            'chatroomactions' => $chatroomActions,
+            'articlesonly' => $articlesOnly
+        ]), true);
 
-        $view->assign('chatroomactions', $chatroomActions);
-        $this->drawer('search', $view->draw('_search'), true);
-
-        $this->rpc('Search.init');
+        $this->rpc('Search.init', $articlesOnly);
     }
 
     public function ajaxHttpInitRoster()
@@ -101,9 +100,7 @@ class Search extends Base
             $contacts = Contact::suggest($this->me)->limit(10)->get();
 
             if (validateJid($key) && $key != $this->me->id) {
-                $contact = new Contact;
-                $contact->id = $key;
-                $contacts->push($contact);
+                $contacts->prepend(Contact::firstOrNew(['id' => $key]));
             }
 
             $view->assign('contacts', $contacts);

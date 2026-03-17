@@ -39,6 +39,8 @@ class CommunityPosts extends Base
     {
         $comment = AppPost::find($packet->content);
 
+        if (!$comment) return;
+
         if ($comment->isLike()) {
             $this->toast($packet->content
                 ? $this->__('post.comment_like_published')
@@ -152,7 +154,7 @@ class CommunityPosts extends Base
         $c->ajaxGetDrawer($jid);
     }
 
-    public function ajaxGetItems($origin, $node, $before = 'empty')
+    public function ajaxGetItems(string $origin, string $node, $before = 'empty')
     {
         if (!validateServerNode($origin, $node)) {
             return;

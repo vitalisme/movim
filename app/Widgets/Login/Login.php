@@ -35,7 +35,7 @@ class Login extends Base
         $this->registerEvent('storage_get_error', 'onConfig');
         $this->registerEvent('ssl_error', 'onFailAuth');
         $this->registerEvent('dns_error', 'onDNSError');
-        $this->registerEvent('timeout_error', 'onTimeoutError');
+        $this->registerEvent('connection_error', 'onConnectionError');
         $this->registerEvent('streamerror', 'onFailAuth');
     }
 
@@ -101,9 +101,13 @@ class Login extends Base
             }
         }
 
+        $started = (int)requestAPI('started');
+
         $this->view->assign('pop', User::count());
         $this->view->assign('admins', User::where('admin', true)->get());
-        $this->view->assign('connected', (int)requestAPI('started'));
+        $this->view->assign('connected', $started);
+        $this->view->assign('maxsessions', $configuration->maxsessions);
+        $this->view->assign('maxsessionsreached', ($configuration->maxsessions > 0 && $started >= $configuration->maxsessions));
         $this->view->assign('error', $this->prepareError());
 
         if (
@@ -118,16 +122,16 @@ class Login extends Base
         }
     }
 
-    public function showErrorBlock($error)
+    public function showErrorBlock($error, ?string $errorMessage = null)
     {
         $this->me?->encryptedPasswords()->delete();
 
         $this->rpc('Login.clearQuick');
-        $this->rpc('MovimTpl.fill', '#error', $this->prepareError($error));
+        $this->rpc('MovimTpl.fill', '#error', $this->prepareError($error, $errorMessage));
         $this->rpc('MovimUtils.addClass', '#login_widget', 'error');
     }
 
-    public function prepareError($error = 'default')
+    public function prepareError(string $error = 'default', ?string $errorMessage = null)
     {
         $view = $this->tpl();
 
@@ -139,6 +143,8 @@ class Login extends Base
         } else {
             $view->assign('error', $error_text);
         }
+
+        $view->assign('errormessage', $errorMessage);
 
         return $view->draw('_login_error');
     }
@@ -153,9 +159,9 @@ class Login extends Base
         $this->showErrorBlock('dns');
     }
 
-    public function onTimeoutError()
+    public function onConnectionError(Packet $packet)
     {
-        $this->showErrorBlock('timeout');
+        $this->showErrorBlock('connection', errorMessage: $packet->content);
     }
 
     public function onSASLFailure(Packet $packet)
@@ -200,9 +206,7 @@ class Login extends Base
     ) {
         if ($sessionId == null) return;
 
-        $validateLogin = Validator::stringType()->length(1, 254);
-
-        if (!$validateLogin->isValid($login)) {
+        if (!validateJid($login)) {
             $this->showErrorBlock('login_format');
             return;
         }
@@ -247,13 +251,21 @@ class Login extends Base
         ?string $deviceId = null
     ) {
         $configuration = Configuration::get();
-        if (!Validator::stringType()->length(1, 254)->isValid($login)) {
+
+        if (!validateJid($login)) {
             $this->showErrorBlock('login_format');
             return;
         }
 
         if (!Validator::stringType()->length(1, 128)->isValid($password)) {
             $this->showErrorBlock('password_format');
+            return;
+        }
+
+
+        $started = (int)requestAPI('started');
+        if ($configuration->maxsessions > 0 && $started >= $configuration->maxsessions) {
+            $this->showErrorBlock('max_sessions_reached');
             return;
         }
 

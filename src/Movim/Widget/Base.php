@@ -18,6 +18,7 @@ use Movim\Template\Partial;
 use Moxl\Xec\Action;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use Illuminate\Support\Carbon;
 use Rain\Tpl;
 
 class Base
@@ -35,7 +36,7 @@ class Base
     public $baseUri;
     public array $events = [];
     public array $tasks = [];
-    public $filters;
+    public array $filters = [];
 
     // Meta tags
     public $title;
@@ -169,54 +170,31 @@ class Base
      * @param timestamp $string
      * @return string
      */
-    function prepareDate(string $datetime = '', bool $compact = false, bool $hours = true): string
+    function prepareDate(string $datetime = '', ?bool $compact = false, ?bool $hours = true): string
     {
-        $time = strtotime($datetime);
-        $time = $time !== false ? $time : time();
-        $t = $time + getTimezoneOffset($this->resolveTimezone());
+        global $language;
 
-        $date = '';
+        $carbon = Carbon::parse($datetime)->locale(
+            $this->sessionId ? linker($this->sessionId)->locale->language : $language
+        )->timezone($this->resolveTimezone());
 
-        $reldays = - (time() - $t - (time() % 86400)) / 86400;
-
-        // if $reldays is within a week
-        if (-7 < $reldays && $reldays <= 2) {
-            if ($reldays > 1) {
-                $date = '';
-            } elseif (-1 < $reldays && $reldays <= 0) {
-                $date = $this->__('date.yesterday');
-            } elseif (0 < $reldays && $reldays <= 1) {
-                // Today
-            } else {
-                $date = $this->__('date.ago', ceil(-$reldays));
-            }
-        } else {
-            if (!$compact) {
-                $date .= $this->__('day.' . strtolower(date('l', $t))) . ', ';
-            }
-
-            $date .= date('j', $t) . ' ' . $this->__('month.' . strtolower(date('F', $t)));
-
-            // Over 6 months
-            if (abs($reldays) > 182) {
-                $date .= gmdate(', Y', $t);
-            }
-
-            if ($compact) {
-                return $date;
-            }
+        if ($compact == false) {
+            return $carbon->isoFormat('D MMMM YYYY H:mm');
         }
 
-        //if $hours option print the time
-        if ($hours) {
-            if ($date != '') {
-                $date .= ' - ';
+        if ($carbon->isToday()) {
+            if ($hours) {
+                return $carbon->isoFormat('H:mm');
             }
 
-            $date .= gmdate('H:i', $t);
+            return $this->__('date.yesterday');
         }
 
-        return $date;
+        if ($carbon->diffInSeconds() > 3600 * 24 * 7) {
+            return $carbon->isoFormat('D MMMM YYYY');
+        }
+
+        return  $carbon->diffForHumans();
     }
 
     /**
@@ -440,7 +418,7 @@ class Base
      * @param $method The function to call
      * @param $filter Only call this function if the session notif_key is good
      */
-    protected function registerEvent(string $key, string $method, ?string $filter = null)
+    protected function registerEvent(string $key, string $method, string|array|null $filter = null)
     {
         if (!array_key_exists($key, $this->events)) {
             $this->events[$key] = [$method];
@@ -449,11 +427,7 @@ class Base
         }
 
         if ($filter != null) {
-            if (!is_array($this->filters)) {
-                $this->filters = [];
-            }
-
-            $this->filters[$key . '_' . $method] = $filter;
+            $this->filters[$key . '_' . $method] = is_string($filter) ? [$filter] : $filter;
         }
     }
 }

@@ -11,7 +11,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Support\Collection;
 use Movim\XMPPUri;
-use Moxl\Xec\Action\BOB\Request;
 use Moxl\Xec\Action\Pubsub\GetItem;
 
 class Message extends Model
@@ -50,6 +49,7 @@ class Message extends Model
         'jingle_outgoing',
         'jingle_reject',
         'jingle_retract',
+        'space_pending',
     ];
     public const MESSAGE_TYPE_MUC = [
         'groupchat',
@@ -113,6 +113,18 @@ class Message extends Model
     public function post()
     {
         return $this->belongsTo(Post::class, 'postid', 'id');
+    }
+
+    public function resolveSpacePendingInvitation(): ?Info
+    {
+        if ($this->type == 'space_pending') {
+            return Info::where('server', $this->jidfrom)
+                ->where('node', $this->body)
+                ->space()
+                ->first();
+        }
+
+        return null;
     }
 
     public function scopeJid($query, User $user, string $jid)
@@ -191,10 +203,14 @@ class Message extends Model
         if (
             $stanza->attributes()->xmlns
             && $stanza->attributes()->xmlns == 'urn:xmpp:mam:2'
+            && $stanza->forwarded?->message?->{'stanza-id'}
         ) {
+            // Workaround for https://github.com/processone/ejabberd/issues/4544
+            $stanzaId = $stanza->forwarded->message->{'stanza-id'}[count($stanza->forwarded->message->{'stanza-id'}) - 1];
+
             return self::firstOrNew([
                 'user_id' => $user->id,
-                'stanzaid' => (string)$stanza->attributes()->id,
+                'stanzaid' => (string)$stanzaId->attributes()->id,
                 'jidfrom' => bareJid((string)$stanza->forwarded->message->attributes()->from)
             ]);
         } elseif (
@@ -318,14 +334,14 @@ class Message extends Model
             )
         ) {
             if ($this->isMuc()) {
-                $session = linker($this->user->session->id)->session;
+                $session = linker($user->session->id)->session;
 
                 // Cache the state in Session for performances purpose
                 $sessionKey = $this->jidfrom . '_stanza_id';
                 $conferenceStanzaIdEnabled = $session->get($sessionKey, null);
 
                 if ($conferenceStanzaIdEnabled == null) {
-                    $conference = $this->user->session->conferences()
+                    $conference = $user->session->conferences()
                         ->where('conference', $this->jidfrom)
                         ->first();
 
@@ -613,6 +629,19 @@ class Message extends Model
             $this->type = 'invitation';
             $this->body = (string)$stanza->x->attributes()->reason;
             $this->subject = (string)$stanza->x->attributes()->jid;
+        } elseif (
+            isset($stanza->x)
+            && $stanza->x->attributes()->xmlns == 'jabber:x:data'
+        ) {
+            // Message dataform
+            if (
+                (string)$stanza->x->xpath("//field[@var='FORM_TYPE']/value")[0]
+                == 'http://jabber.org/protocol/pubsub#subscribe_authorization'
+            ) {
+                $this->type = 'space_pending';
+                $this->body = (string)$stanza->x->xpath("//field[@var='pubsub#node']/value")[0];
+                $this->subject = (string)$stanza->x->xpath("//field[@var='pubsub#subscriber_jid']/value")[0];
+            }
         }
 
         # XEP-0384 OMEMO Encryption
@@ -654,7 +683,7 @@ class Message extends Model
     /**
      * @desc Prepare and return the body with inline images, and request them if missing
      */
-    public function getInlinedBodyAttribute(?bool $alt = false, bool $triggerRequest = false): ?string
+    public function getInlinedBodyAttribute(?bool $alt = false, ?object $triggerRequest = null): ?string
     {
         if (!array_key_exists('body', $this->attributes)) return null;
 
@@ -696,12 +725,7 @@ class Message extends Model
                     );
 
                     if ($triggerRequest) {
-                        $r = new Request;
-                        $r->setTo($this->attributes['jidfrom'])
-                            ->setResource($this->attributes['resource'])
-                            ->setHash($inline['hash'])
-                            ->setAlgorythm($inline['algorythm'])
-                            ->request();
+                        $triggerRequest($this, $inline['hash'], $inline['algorythm']);
                     }
                 }
             }

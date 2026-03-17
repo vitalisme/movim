@@ -33,7 +33,7 @@
     {/if}
     {if="$count > 0"}data-counter="{$count}"{/if}
     >
-        <img src="{if="$roster"}{$roster->getPicture(\Movim\ImageSize::O)}{else}{$contact->getPicture(\Movim\ImageSize::O)}{/if}">
+        <img src="{if="$roster"}{$roster->getPicture(\Movim\ImageSize::M)}{else}{$contact->getPicture(\Movim\ImageSize::M)}{/if}">
     </span>
 
     <div>
@@ -85,6 +85,8 @@
                 <i class="material-symbols fill">lock</i> {if="$message->retracted"}{$c->__('message.retracted')}{else}{$c->__('message.encrypted')}{/if}
             {elseif="$message->retracted"}
                 <i class="material-symbols">delete</i> {$c->__('message.retracted')}
+            {elseif="$message->type == 'space_pending'"}
+                <i class="material-symbols icon gray">communities</i> {$c->__('spaceinfo.pending_request', $message->subject)}
             {elseif="$message->type == 'invitation'"}
                 <i class="material-symbols icon gray">outgoing_mail</i> {$c->__('message.invitation')}
             {elseif="$message->type == 'jingle_incoming'"}

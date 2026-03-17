@@ -64,6 +64,8 @@ var Notif = {
         }
 
         Notif.displayTab();
+
+        if (typeof BottomNavigation == 'object') BottomNavigation.setChatNotification(keys)
     },
     counter: function (key, counter) {
         var counters = document.querySelectorAll('.counter');
@@ -80,6 +82,8 @@ var Notif = {
 
         Notif.setTab(key, counter);
         Notif.displayTab();
+
+        if (typeof BottomNavigation == 'object') BottomNavigation?.setChatNotification({[key]: counter});
     },
     setTab: function (key, counter) {
         if (Notif.tab_counter1_key == key) {
@@ -172,8 +176,10 @@ var Notif = {
                 };
 
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistration(SW_URI).then((registration) => {
-                        registration.showNotification(title, options);
+                    navigator.serviceWorker.getRegistration(SW_URI).then(registration => {
+                        if (registration) {
+                            registration.showNotification(title, options);
+                        }
                     });
                 } else {
                     var notification = new Notification(

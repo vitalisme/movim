@@ -65,7 +65,7 @@ class RoomsUtils extends Base
 
     public function ajaxGetDrawer($room = false)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -244,7 +244,7 @@ class RoomsUtils extends Base
      */
     public function ajaxGetAvatar($room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -260,7 +260,7 @@ class RoomsUtils extends Base
      */
     public function ajaxSetAvatar($room, $form)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -319,23 +319,23 @@ class RoomsUtils extends Base
 
         switch ($affiliation) {
             case 'owner':
-                $this->toast($this->__('room.affiliation_owner_changed'));
+                $this->toast($this->__('affiliation.owner_changed'));
                 break;
 
             case 'admin':
-                $this->toast($this->__('room.affiliation_admin_changed'));
+                $this->toast($this->__('affiliation.admin_changed'));
                 break;
 
             case 'member':
-                $this->toast($this->__('room.affiliation_member_changed'));
+                $this->toast($this->__('affiliation.member_changed'));
                 break;
 
             case 'outcast':
-                $this->toast($this->__('room.affiliation_outcast_changed'));
+                $this->toast($this->__('affiliation.outcast_changed'));
                 break;
 
             case 'none':
-                $this->toast($this->__('room.affiliation_none_changed'));
+                $this->toast($this->__('affiliation.none_changed'));
                 break;
         }
     }
@@ -400,7 +400,7 @@ class RoomsUtils extends Base
      */
     public function ajaxGetSubject($room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -418,7 +418,7 @@ class RoomsUtils extends Base
     public function ajaxSetSubject($room, $form)
     {
         if (
-            !validateRoom($room)
+            !validateJid($room)
             || !Validator::stringType()->length(0, 200)->isValid($form->subject->value)
         ) {
             return;
@@ -445,14 +445,16 @@ class RoomsUtils extends Base
     /**
      * @brief Display the add room form
      */
-    public function ajaxAdd($room = false, $name = null, $create = false)
+    public function ajaxAdd(?string $room = null, ?string $name = null, ?bool $create = false)
     {
         $view = $this->tpl();
 
-        $view->assign('info', \App\Info::where('server', $room)
+        $view->assign('info', $room
+            ? \App\Info::where('server', $room)
             ->where('node', '')
             ->whereCategory('conference')
-            ->first());
+            ->first()
+            : null);
         $view->assign('mucservice', \App\Info::where('parent', $this->me->session->host)
             ->whereDoesntHave('identities', function ($query) {
                 $query->where('category', 'gateway');
@@ -464,8 +466,9 @@ class RoomsUtils extends Base
         $view->assign('create', $create);
         $view->assign(
             'conference',
-            $this->me->session->conferences()
-                ->where('conference', $room)->first()
+            $room
+                ? $this->me->session->conferences()->where('conference', $room)->first()
+                : null
         );
         $view->assign('name', $name);
         $view->assign('username', $this->me->username);
@@ -491,11 +494,14 @@ class RoomsUtils extends Base
     /**
      * Resolve the room slug from the name
      */
-    public function ajaxResolveSlug($name)
+    public function ajaxResolveSlug(string $name)
     {
         $service = Info::where('parent', $this->me->session->host)
             ->whereCategory('conference')
             ->whereType('text')
+            ->whereDoesntHave('identities', function ($query)  {
+                $query->where('category', 'gateway');
+            })
             ->first();
 
         $slugified = slugify($name);
@@ -510,7 +516,7 @@ class RoomsUtils extends Base
      */
     public function ajaxAddCreate($form)
     {
-        if (!validateRoom($form->jid->value)) {
+        if (!validateJid($form->jid->value)) {
             $this->toast($this->__('chatrooms.bad_id'));
         } elseif (trim($form->name->value) == '') {
             $this->toast($this->__('chatrooms.empty_name'));
@@ -526,7 +532,7 @@ class RoomsUtils extends Base
 
     public function ajaxConfigureCreated($form)
     {
-        if (!validateRoom($form->jid->value)) {
+        if (!validateJid($form->jid->value)) {
             $this->toast($this->__('chatrooms.bad_id'));
         } else {
             if ($form->type->value == 'groupchat') {
@@ -536,7 +542,7 @@ class RoomsUtils extends Base
                     ->setAutoJoin($form->autojoin->value)
                     ->setPinned($form->pinned->value)
                     ->setNick($form->nick->value ?? $this->me->username)
-                    ->setNotify((int)array_flip(Conference::$notifications)[$form->notify->value])
+                    ->setNotify((int)array_flip(Conference::NOTIFICATIONS)[$form->notify->value])
                     ->request();
             } elseif ($form->type->value == 'channel') {
                 $cgc = $this->xmpp(new CreateChannel);
@@ -545,7 +551,7 @@ class RoomsUtils extends Base
                     ->setAutoJoin($form->autojoin->value)
                     ->setPinned($form->pinned->value)
                     ->setNick($form->nick->value)
-                    ->setNotify((int)array_flip(Conference::$notifications)[$form->notify->value])
+                    ->setNotify((int)array_flip(Conference::NOTIFICATIONS)[$form->notify->value])
                     ->request();
             }
         }
@@ -556,7 +562,7 @@ class RoomsUtils extends Base
      */
     public function ajaxAddConfirm($form)
     {
-        if (!validateRoom($form->jid->value)) {
+        if (!validateJid($form->jid->value)) {
             $this->toast($this->__('chatrooms.bad_id'));
         } elseif (trim($form->name->value) == '') {
             $this->toast($this->__('chatrooms.empty_name'));
@@ -570,7 +576,7 @@ class RoomsUtils extends Base
                 'nick' => $form->nick->value,
                 'autojoin' => $form->autojoin->value,
                 'pinned' => $form->pinned->value,
-                'notify' => (int)array_flip(Conference::$notifications)[$form->notify->value],
+                'notify' => (int)array_flip(Conference::NOTIFICATIONS)[$form->notify->value],
             ];
 
             $this->onChatroomCreated($packet);
@@ -582,7 +588,7 @@ class RoomsUtils extends Base
      */
     public function ajaxRemove($room)
     {
-        if (!validateRoom($room)) return;
+        if (!validateJid($room)) return;
         $this->dialog($this->view('_rooms_remove', ['room' => $room]));
     }
 
@@ -591,7 +597,7 @@ class RoomsUtils extends Base
      */
     public function ajaxRemoveConfirm($room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -614,7 +620,7 @@ class RoomsUtils extends Base
      */
     public function ajaxInvite($form)
     {
-        if (!validateRoom($form->to->value)) {
+        if (!validateJid($form->to->value)) {
             return;
         }
 
@@ -666,7 +672,7 @@ class RoomsUtils extends Base
      */
     public function ajaxAskDestroy($room)
     {
-        if (!validateRoom($room)) return;
+        if (!validateJid($room)) return;
         $this->dialog($this->view('_rooms_destroy', ['room' => $room]));
     }
 
@@ -675,7 +681,7 @@ class RoomsUtils extends Base
      */
     public function ajaxDestroy($room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -689,7 +695,7 @@ class RoomsUtils extends Base
      */
     public function ajaxHttpGetPictures($room, $page = 0)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -724,7 +730,7 @@ class RoomsUtils extends Base
      */
     public function ajaxHttpGetLinks($room, $page = 0)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -786,7 +792,7 @@ class RoomsUtils extends Base
      */
     public function ajaxAddBanned(string $room)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -800,7 +806,7 @@ class RoomsUtils extends Base
      */
     public function ajaxAddBannedConfirm(string $room, $form)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -821,7 +827,7 @@ class RoomsUtils extends Base
      */
     public function ajaxRemoveBanned(string $room, string $jid)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -838,7 +844,7 @@ class RoomsUtils extends Base
      */
     public function ajaxRemoveBannedConfirm(string $room, string $jid)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -854,7 +860,7 @@ class RoomsUtils extends Base
      */
     public function ajaxConfigureUser(string $room, string $jid)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -875,7 +881,7 @@ class RoomsUtils extends Base
      */
     public function ajaxChangeVoice(string $room, string $mucjid, $form)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 
@@ -901,7 +907,7 @@ class RoomsUtils extends Base
      */
     public function ajaxChangeAffiliationConfirm(string $room, $form)
     {
-        if (!validateRoom($room)) {
+        if (!validateJid($room)) {
             return;
         }
 

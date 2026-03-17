@@ -2,22 +2,50 @@
     transition: height .1s;
 }
 
-#shortcuts_widget + hr {
-    transition: opacity .2s;
+#shortcuts_widget + ul li:not(.active):first-child:before {
+    display: block;
+    content: '';
+    width: 5.5rem;
+    height: 5.5rem;
+    background-color: rgba(var(--movim-font), 0.04);
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    border-radius: 2rem;
+    z-index: -1;
+    transition: background-color 0.15s ease;
 }
 
-#shortcuts_widget:empty + hr {
+@media screen and (max-width: 1024px) {
+    #shortcuts_widget {
+        margin-top: 1rem;
+    }
+}
+
+#shortcuts_widget hr {
+    transition: opacity .2s;
+    margin-top: 0;
+}
+
+#shortcuts_widget:empty+hr {
     opacity: 0;
 }
 
 #shortcuts_widget li {
-    transition: transform .2s, opacity .2s, height .2s;
+    transition: transform .2s, opacity .2s, height .2s, margin-bottom .2s;
     opacity: 1;
     height: 7rem;
+}
+
+#shortcuts_widget li:last-child {
+    border-radius: 0;
+    border-bottom: 1px solid rgba(var(--movim-font), 0.12);
+    margin-bottom: 0.5rem;
 }
 
 #shortcuts_widget li.disappear {
     transform: scale(0.5);
     opacity: 0;
     height: 0;
+    margin-bottom: 0;
 }

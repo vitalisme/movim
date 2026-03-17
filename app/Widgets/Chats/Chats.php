@@ -10,7 +10,9 @@ use App\Message;
 use App\OpenChat;
 use App\Roster;
 use App\Widgets\Chat\Chat;
+use App\Widgets\Notif\Notif;
 use Carbon\Carbon;
+use Movim\Widget\Wrapper;
 use Moxl\Xec\Payload\Packet;
 
 class Chats extends Base
@@ -217,7 +219,7 @@ class Chats extends Base
         }
     }
 
-    public function ajaxClose($jid, $closeDiscussion = false)
+    public function ajaxClose(string $jid, ?bool $closeDiscussion = false)
     {
         if (!validateJid($jid)) {
             return;
@@ -239,6 +241,8 @@ class Chats extends Base
         }
 
         $this->rpc('Stories_ajaxHttpGet');
+
+        (new Notif($this->me, sessionId: $this->sessionId))->ajaxClear('chat|' . $jid);
     }
 
     public function prepareCalls()

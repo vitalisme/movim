@@ -3,11 +3,11 @@
     {if="$affiliation != $value->affiliationTxt && $page == 1"}
         <li class="subheader sticky">
             {if="$value->mucaffiliation == 'owner'"}
-                <span class="control icon tiny yellow" title="{$c->__('room.affiliation_owner')}">
+                <span class="control icon tiny yellow" title="{$c->__('affiliation.owner')}">
                     <i class="material-symbols fill">star</i>
                 </span>
             {elseif="$value->mucaffiliation == 'admin'"}
-                <span class="control icon tiny gray" title="{$c->__('room.affiliation_owner')}">
+                <span class="control icon tiny gray" title="{$c->__('affiliation.owner')}">
                     <i class="material-symbols fill">star</i>
                 </span>
             {/if}
@@ -22,6 +22,7 @@
         {if="$value->mucjid && $compact"}
             onclick="RoomsUtils_ajaxGetParticipant('{$conference->conference|echapJS}', '{$value->mucjid}')"
         {/if}
+        name="{$value->mucjid|cleanupId}-{$value->mucrole|cleanupId}-{$value->resource|cleanupId}"
         >
         <span class="primary icon bubble small status {if="$value->mucjid"}active{/if} {$value->presencekey}"
             {if="$value->mucjid"}
@@ -31,7 +32,7 @@
             <img loading="lazy" src="{$value->conferencePicture}">
         </span>
         {if="$compact == false"}
-            {if="$value->mucjid != $c->me"}
+            {if="$value->mucjid != $c->me->id"}
                 <span class="control icon active gray divided" onclick="
                     Chats_ajaxOpen('{$value->mucjid|echapJS}', true);
                     Drawer.clear();">

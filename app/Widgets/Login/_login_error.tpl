@@ -1,5 +1,5 @@
 <section>
-    <ul class="list thick">
+    <ul class="list thick" id="login_error">
         <li>
             <span class="primary icon">
                 <i class="material-symbols">error</i>
@@ -7,6 +7,11 @@
             <div>
                 <p>{$c->__('error.oops')}</p>
                 <p>{$error}</p>
+                {if="$errormessage"}
+                    <p class="all">
+                        <code>{$errormessage}</code>
+                    </p>
+                {/if}
             </div>
         </li>
     </ul>
